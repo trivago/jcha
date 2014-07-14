@@ -1,11 +1,11 @@
 package com.trivago.jcha;
 
 
-public class ClasssHistogramEntry
+public class ClasssHistogramEntry implements Cloneable
 {
 	final String className;
-	final int instances;
-	final int bytes;
+	int instances;
+	long bytes;
 	
 	public ClasssHistogramEntry(String className, int instances, int bytes)
 	{
@@ -20,6 +20,7 @@ public class ClasssHistogramEntry
 		this.instances = Integer.parseInt(instances);
 		this.bytes = Integer.parseInt(bytes);
 	}
+
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
@@ -38,5 +39,20 @@ public class ClasssHistogramEntry
 		return builder.toString();
 	}
 	
+	/**
+	 * Creates a "deep" copy.
+	 */
+	@Override
+	protected ClasssHistogramEntry clone()
+	{
+		try
+		{
+			return (ClasssHistogramEntry)super.clone();
+		}
+		catch (CloneNotSupportedException exc)
+		{
+			throw new RuntimeException(exc); // impossible
+		}
+	}
 	
 }

@@ -9,7 +9,7 @@ public class ClassHistogramStatsEntry
 
 	final String className;
 	final int index;
-	int byteDiff;
+	long byteDiff;
 	int instanceDiff;
 	float byteChangePercent;
 	float instanceChangePercent;
@@ -23,7 +23,7 @@ public class ClassHistogramStatsEntry
 	/**
 	 * @return the byteDiff
 	 */
-	public int getByteDiff()
+	public long getByteDiff()
 	{
 		return byteDiff;
 	}
@@ -31,7 +31,7 @@ public class ClassHistogramStatsEntry
 	/**
 	 * @param byteDiff the byteDiff to set
 	 */
-	public void setByteDiff(int byteDiff)
+	public void setByteDiff(long byteDiff)
 	{
 		this.byteDiff = byteDiff;
 	}

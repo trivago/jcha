@@ -52,7 +52,7 @@ public class ClassHistogramStats
 				continue;
 			}
 
-			int byteDiffAbsolute = Math.abs(chse.byteDiff);
+			long byteDiffAbsolute = Math.abs(chse.byteDiff);
 			if (byteDiffAbsolute < minByteDiff)
 			{
 				continue;

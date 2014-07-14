@@ -1,11 +1,20 @@
 jcha - Java Class Histogram Analyser
 
+ABOUT:
 jcha is a tool to analyse Java class histograms, focussed on histogram comparison.
 It can aid in debugging memory leaks, or for finding dominators before issues arise.
 Supported histogram formats are those from "jcmd pid GC.class_histogram".
 
 It can run compare 2 or more histograms, and find correlations between classes.
 
+
+USAGE:
+BUILDING:
+  mvn package
+
+RUNNING
+ ./jcha histogram1 histogram2
+ -/jcha -h  # for showing help on all options like sorting
 
 
 

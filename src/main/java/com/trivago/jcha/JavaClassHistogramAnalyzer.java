@@ -5,13 +5,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
 import com.trivago.jcha.comparator.AbsoluteInstancesComparator;
 import com.trivago.jcha.comparator.AbsoluteSizeComparator;
+import com.trivago.jcha.comparator.BaseComparator;
 import com.trivago.jcha.comparator.RelativeInstancesComparator;
 import com.trivago.jcha.comparator.RelativeSizeComparator;
 
@@ -21,20 +23,22 @@ public class JavaClassHistogramAnalyzer
 
 
 	private static final boolean DEBUGPARSER = false;
-	private String file1 = null;
-	private String file2 = null;
+	private List<String> files = new ArrayList<>();
+//	private String file2 = null;
 	private SortStyle sortStyle = SortStyle.AbsCount;
 	private int limit = Integer.MAX_VALUE;
 	private boolean showIdentical = false;
 	
 	public static void main(String[] args) throws IOException
 	{
+		System.out.println("main " + args.length);
 		JavaClassHistogramAnalyzer javaClassHistogramAnalyzer = new JavaClassHistogramAnalyzer(args);
 		javaClassHistogramAnalyzer.work();
 	}
 
 	public JavaClassHistogramAnalyzer(String[] args)
 	{
+		System.out.println("construct " + args.length);
 		parseArgs(args);
 	
 	}
@@ -44,6 +48,7 @@ public class JavaClassHistogramAnalyzer
 		for (int i=0; i<args.length; i++)
 		{
 			String arg = args[i];
+//			System.out.println("parse " + arg);
 			if ( arg.equals("-s"))
 			{
 				// -s = sort style
@@ -61,23 +66,20 @@ public class JavaClassHistogramAnalyzer
 				// -i = show identical
 				showIdentical = true;
 			}
+			else if (arg.equals("-h") || arg.equals("--help"))
+			{
+				// -h = help
+				usage(0);
+			}
 			else
 			{
-				if (file1==null)
-				{
-					file1 = arg;
-				}
-				else
-				{
-					if (file2==null)
-						file2 = arg;
-					else
-						usage(1);
-				}
+//				System.out.println("arg=" +arg);
+				files.add(arg);
 			}
 		}
-		if (file2==null)
+		if (files.size() < 2)
 		{
+			System.out.println("Foo");
 			usage(1);
 		}
 	}
@@ -98,7 +100,7 @@ public class JavaClassHistogramAnalyzer
 
 	private void usage(Integer exitCode)
 	{
-		System.out.println("Usage: jcha [-s SortStyle] [-n limit] [-i] file1 files");
+		System.out.println("Usage: jcha [-s SortStyle] [-n limit] [-i] file1 file2 [file3 ...]");
 		System.out.println("  -i             Show also identical/unchanged classes");
 		System.out.println("  -n limit       Limit number of shown classes");
 		System.out.println("  -s SortStyle   {" + Arrays.toString(SortStyle.values()) + "} Default=" + sortStyle);
@@ -111,15 +113,43 @@ public class JavaClassHistogramAnalyzer
 
 	private void work() throws IOException
 	{
-		ClassHistogram ch1 = loadHistogram(file1);
-		ClassHistogram ch2 = loadHistogram(file2);
+		int histCountFiles = files.size();
+		List<ClassHistogram> histograms = new ArrayList<>(histCountFiles);
+		for (int i=0; i< histCountFiles; i++)
+		{
+			try
+			{
+				histograms.add(loadHistogram(files.get(i)));
+			}
+			catch (Exception exc)
+			{
+				warn("Ignoring histogram: " + exc.getMessage());
+			}
+		}
+
+		// Any invalid
+		int histCount = histograms.size();
+
+		final ClassHistogram ch1;
+		final ClassHistogram ch2;
+		if (histCount == 2)
+		{
+			ch1 = histograms.get(0);
+			ch2 = histograms.get(histograms.size()-1);
+		}
+		else
+		{
+			int midOfArray = Math.round(histCount/2.0f) - 1; // 3 => 1  ; 4 => 2 ; 5 => 2
+			ch1 = buildAverageHistogram(histograms, 0 , midOfArray);
+			ch2 = buildAverageHistogram(histograms, midOfArray , histCount-1);
+		}
 		
 		ClassHistogramStats stats = calculateDiff(ch1, ch2);
 		
 		ClassHistogramStats stats2 = stats.ignoreHarmless(showIdentical , 0,0);
 //		ClassHistogramStats stats2 = stats.ignoreHarmless(showEqual, 100,0);
 		
-		Comparator comparator = null;
+		BaseComparator comparator = null;
 		switch (sortStyle)
 		{
 			case AbsCount: comparator = new AbsoluteInstancesComparator(); break;
@@ -148,6 +178,46 @@ public class JavaClassHistogramAnalyzer
 //		System.out.println("CH1: " + ch1);
 	}
 
+	private ClassHistogram buildAverageHistogram(List<ClassHistogram> histograms, int startIndex, int endIndex)
+	{
+		int count = endIndex - startIndex + 1;
+		ClassHistogram combined = new ClassHistogram();
+		combined.setDescription("Averaged class histogram, built from " + count + " histograms.");
+		for (int i=startIndex; i<= endIndex; i++)
+		{
+			ClassHistogram ch = histograms.get(i);
+			for (ClasssHistogramEntry che : ch.values())
+			{
+				String key = che.className;
+				ClasssHistogramEntry cheCombined = combined.get(key);
+				if (cheCombined == null)
+				{
+					cheCombined = che.clone();
+					combined.put(key, cheCombined);
+				}
+				else
+				{
+					cheCombined.instances += che.instances;
+					cheCombined.bytes += che.bytes;
+				}
+			}
+		}
+		
+		for (ClasssHistogramEntry che : combined.values())
+		{
+			che.instances = Math.round(che.instances / (float)count); // Rounding up: 1/2 => 1
+			che.bytes = Math.round(che.bytes / (float)count);
+		}
+
+		return combined;
+	}
+
+	private void warn(String message)
+	{
+		System.err.println(message);
+		// TODO Migrate to logger
+	}
+
 	private ClassHistogramStats calculateDiff(ClassHistogram ch1, ClassHistogram ch2)
 	{
 		ClassHistogramStats stats = new ClassHistogramStats();
@@ -162,7 +232,7 @@ public class JavaClassHistogramAnalyzer
 			else
 			{
 				ClassHistogramStatsEntry chse = new ClassHistogramStatsEntry(key);
-				int byteDiff = che2.bytes - che1.bytes;
+				long byteDiff = che2.bytes - che1.bytes;
 				float byteChangePercent = 100f * che2.bytes / (float)che1.bytes;
 				chse.setByteDiff(byteDiff);
 				chse.setByteChangePercent(byteChangePercent);

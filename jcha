@@ -9,5 +9,5 @@ if test -z $JCHA_CP; then
 	JCHA_CP=`dirname "$0"`/target/jcha-1.0-SNAPSHOT.jar
 fi
 
-java -cp ${JCHA_CP} com/trivago/jcha/JavaClassHistogramAnalyzer
+java -cp ${JCHA_CP} com/trivago/jcha/JavaClassHistogramAnalyzer $*
 

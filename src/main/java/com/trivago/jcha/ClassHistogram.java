@@ -15,6 +15,17 @@ public class ClassHistogram
 {
 	// key is class name (as String)
 	private Map<String, ClasssHistogramEntry> id2entry = new HashMap<>();
+	private String description;
+
+	public String getDescription()
+	{
+		return description;
+	}
+
+	public void setDescription(String description)
+	{
+		this.description = description;
+	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
