@@ -29,13 +29,13 @@ public class ClasssHistogramEntry implements Cloneable
 	public String toString()
 	{
 		StringBuilder builder = new StringBuilder();
-		builder.append("[");
+		builder.append("[ ");
 		builder.append(className);
 		builder.append(": instances=");
 		builder.append(instances);
 		builder.append(", bytes=");
 		builder.append(bytes);
-		builder.append("]");
+		builder.append(" ]");
 		return builder.toString();
 	}
 	

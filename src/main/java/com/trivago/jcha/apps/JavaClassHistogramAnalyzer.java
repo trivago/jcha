@@ -46,7 +46,7 @@ public class JavaClassHistogramAnalyzer
 		{
 			try
 			{
-				histograms.add(new ClassHistogram(files.get(i)));
+				histograms.add(new ClassHistogram(files.get(i), param.ignoreKnownDuplicates()));
 			}
 			catch (Exception exc)
 			{

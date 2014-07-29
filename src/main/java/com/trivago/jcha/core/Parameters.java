@@ -12,6 +12,7 @@ public class Parameters
 	private SortStyle sortStyle = SortStyle.AbsCount;
 	private int limit = Integer.MAX_VALUE;
 	private boolean showIdentical = false;
+	private boolean ignoreKnownDuplicates = true; // currently always true
 
 	public void parseArgs(String[] args, int requiredHistograms)
 	{
@@ -113,6 +114,11 @@ public class Parameters
 	public void setLimit(int limit)
 	{
 		this.limit = limit;
+	}
+
+	public boolean ignoreKnownDuplicates()
+	{
+		return ignoreKnownDuplicates ;
 	}
 
 }

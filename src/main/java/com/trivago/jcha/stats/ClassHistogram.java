@@ -38,7 +38,7 @@ public class ClassHistogram
 	 * @param file
 	 * @throws IOException
 	 */
-	public ClassHistogram (String file) throws IOException
+	public ClassHistogram (String file, boolean ignoreKnownDuplicates) throws IOException
 	{
 		ClassHistogram ch = this; // migrated from method to constructor
 		try (FileInputStream fis = new FileInputStream(new File(file));
@@ -55,14 +55,27 @@ public class ClassHistogram
 				}
 				String className = row[3];
 				ClasssHistogramEntry che = new ClasssHistogramEntry(className, row[1], row[2]);
+				
+				// Ignore duplicated class histogram entries.See:
+				// http://stackoverflow.com/questions/24746998/why-are-the-java-class-histogram-entries-from-jcmd-not-unique
+				boolean knownDuplicate = "[[I".equals(className);
+				knownDuplicate = knownDuplicate | "GregorSamsa".equals(className); // might need fully-qualified class name here
+				
 				if (ch.containsKey(className))
 				{
-					System.err.println("Warning: Duplicated entry:");
-					System.err.println("Old: " + ch.get(className));
-					System.err.println("New: " + che);
-					
+					if (!knownDuplicate)
+					{
+						System.err.println("Warning: Duplicated entry:  old: " + ch.get(className) + " | new: " + che);
+					}
 				}
-				ch.put(className, che);
+				if (knownDuplicate && ignoreKnownDuplicates)
+				{
+					// skip
+				}
+				else
+				{
+					ch.put(className, che);
+				}
 			}
 
 //			return ch;

@@ -5,22 +5,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.trivago.jcha.stats.ClassHistogram;
-import com.trivago.jcha.stats.ClasssHistogramEntry;
-
 import javafx.application.Application;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.chart.Axis;
-import javafx.scene.chart.Chart;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.chart.XYChart.Series;
 import javafx.stage.Stage;
+
+import com.trivago.jcha.stats.ClassHistogram;
+import com.trivago.jcha.stats.ClasssHistogramEntry;
 
 public class App extends Application
 {
@@ -136,7 +132,7 @@ public class App extends Application
 		{
 			try
 			{
-				histograms.add(new ClassHistogram(files.get(i)));
+				histograms.add(new ClassHistogram(files.get(i), param.ignoreKnownDuplicates()));
 			}
 			catch (Exception exc)
 			{
