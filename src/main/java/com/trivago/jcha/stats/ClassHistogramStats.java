@@ -1,4 +1,4 @@
-package com.trivago.jcha;
+package com.trivago.jcha.stats;
 
 import java.util.HashMap;
 import java.util.Map;

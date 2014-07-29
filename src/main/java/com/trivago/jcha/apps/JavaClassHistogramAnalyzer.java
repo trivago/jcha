@@ -1,4 +1,4 @@
-package com.trivago.jcha;
+package com.trivago.jcha.apps;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -16,110 +15,38 @@ import com.trivago.jcha.comparator.AbsoluteSizeComparator;
 import com.trivago.jcha.comparator.BaseComparator;
 import com.trivago.jcha.comparator.RelativeInstancesComparator;
 import com.trivago.jcha.comparator.RelativeSizeComparator;
+import com.trivago.jcha.core.Parameters;
+import com.trivago.jcha.stats.ClassHistogram;
+import com.trivago.jcha.stats.ClassHistogramStats;
+import com.trivago.jcha.stats.ClassHistogramStatsEntry;
+import com.trivago.jcha.stats.ClasssHistogramEntry;
 
 public class JavaClassHistogramAnalyzer
 {
-	enum SortStyle {AbsSize, RelSize, AbsCount, RelCount}
-
-
-	private static final boolean DEBUGPARSER = false;
-	private List<String> files = new ArrayList<>();
-//	private String file2 = null;
-	private SortStyle sortStyle = SortStyle.AbsCount;
-	private int limit = Integer.MAX_VALUE;
-	private boolean showIdentical = false;
+	private Parameters param = new Parameters();
 	
 	public static void main(String[] args) throws IOException
 	{
-		System.out.println("main " + args.length);
-		JavaClassHistogramAnalyzer javaClassHistogramAnalyzer = new JavaClassHistogramAnalyzer(args);
-		javaClassHistogramAnalyzer.work();
+		JavaClassHistogramAnalyzer jcha = new JavaClassHistogramAnalyzer(args);
+		jcha.work();
 	}
 
 	public JavaClassHistogramAnalyzer(String[] args)
 	{
-		System.out.println("construct " + args.length);
-		parseArgs(args);
-	
+		param.parseArgs(args, 2);
 	}
 	
-	public void parseArgs(String[] args)
-	{
-		for (int i=0; i<args.length; i++)
-		{
-			String arg = args[i];
-//			System.out.println("parse " + arg);
-			if ( arg.equals("-s"))
-			{
-				// -s = sort style
-				ensureOneMoreArg(i, args.length);
-				sortStyle = SortStyle.valueOf(args[++i]);
-			}
-			else if (arg.equals("-n"))
-			{
-				// -n = number of results (limit)
-				ensureOneMoreArg(i, args.length);
-				limit  = Integer.parseInt(args[++i]);
-			}
-			else if (arg.equals("-i"))
-			{
-				// -i = show identical
-				showIdentical = true;
-			}
-			else if (arg.equals("-h") || arg.equals("--help"))
-			{
-				// -h = help
-				usage(0);
-			}
-			else
-			{
-//				System.out.println("arg=" +arg);
-				files.add(arg);
-			}
-		}
-		if (files.size() < 2)
-		{
-			System.out.println("Foo");
-			usage(1);
-		}
-	}
-
-	private void ensureOneMoreArg(int i, int length)
-	{
-		if (i == length-1)
-		{
-			// Alread at last argument => no more => argument error
-			usage(1);
-		}
-	}
-
-	void usage()
-	{
-		usage(null);
-	}
-
-	private void usage(Integer exitCode)
-	{
-		System.out.println("Usage: jcha [-s SortStyle] [-n limit] [-i] file1 file2 [file3 ...]");
-		System.out.println("  -i             Show also identical/unchanged classes");
-		System.out.println("  -n limit       Limit number of shown classes");
-		System.out.println("  -s SortStyle   {" + Arrays.toString(SortStyle.values()) + "} Default=" + sortStyle);
-		if (exitCode != null)
-		{
-			System.exit(exitCode);
-		}
-
-	}
 
 	private void work() throws IOException
 	{
+		List<String> files = param.getFiles();
 		int histCountFiles = files.size();
 		List<ClassHistogram> histograms = new ArrayList<>(histCountFiles);
 		for (int i=0; i< histCountFiles; i++)
 		{
 			try
 			{
-				histograms.add(loadHistogram(files.get(i)));
+				histograms.add(new ClassHistogram(files.get(i)));
 			}
 			catch (Exception exc)
 			{
@@ -146,11 +73,11 @@ public class JavaClassHistogramAnalyzer
 		
 		ClassHistogramStats stats = calculateDiff(ch1, ch2);
 		
-		ClassHistogramStats stats2 = stats.ignoreHarmless(showIdentical , 0,0);
+		ClassHistogramStats stats2 = stats.ignoreHarmless(param.showIdentical() , 0,0);
 //		ClassHistogramStats stats2 = stats.ignoreHarmless(showEqual, 100,0);
 		
 		BaseComparator comparator = null;
-		switch (sortStyle)
+		switch (param.getSortStyle())
 		{
 			case AbsCount: comparator = new AbsoluteInstancesComparator(); break;
 			case RelCount: comparator = new RelativeInstancesComparator(); break;
@@ -168,14 +95,11 @@ public class JavaClassHistogramAnalyzer
 		{
 			System.out.println(entry);
 			pos++;
-			if (pos == limit)
+			if (pos == param.getLimit())
 			{
 				break;
 			}
 		}
-		
-		
-//		System.out.println("CH1: " + ch1);
 	}
 
 	private ClassHistogram buildAverageHistogram(List<ClassHistogram> histograms, int startIndex, int endIndex)
@@ -254,43 +178,4 @@ public class JavaClassHistogramAnalyzer
 //		System.err.println(string);		
 	}
 
-	private ClassHistogram loadHistogram(String file) throws IOException
-	{
-
-		ClassHistogram ch = new ClassHistogram();
-		try (FileInputStream fis = new FileInputStream(new File(file));
-				BufferedReader reader = new BufferedReader(new InputStreamReader(fis));)
-		{
-			String line;
-			while ((line = reader.readLine()) != null)
-			{
-				String[] row = line.trim().split(" +");
-				if (row.length != 4)
-				{
-					debugparser("Ignoring: " + line);
-					continue;
-				}
-				String className = row[3];
-				ClasssHistogramEntry che = new ClasssHistogramEntry(className, row[1], row[2]);
-				if (ch.containsKey(className))
-				{
-					System.err.println("Warning: Duplicated entry:");
-					System.err.println("Old: " + ch.get(className));
-					System.err.println("New: " + che);
-					
-				}
-				ch.put(className, che);
-			}
-
-			return ch;
-		}
-	}
-
-	private void debugparser(String string)
-	{
-		if (DEBUGPARSER)
-		{
-			System.err.println(string);
-		}
-	}
 }

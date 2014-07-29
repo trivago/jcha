@@ -1,6 +1,7 @@
 package com.trivago.jcha.comparator;
 
-import com.trivago.jcha.ClassHistogramStatsEntry;
+import com.trivago.jcha.stats.ClassHistogramStatsEntry;
+
 
 
 /**

@@ -1,4 +1,4 @@
-package com.trivago.jcha;
+package com.trivago.jcha.stats;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -14,7 +14,7 @@ public class ClassHistogramStatsEntry
 	float byteChangePercent;
 	float instanceChangePercent;
 
-	ClassHistogramStatsEntry(String className)
+	public ClassHistogramStatsEntry(String className)
 	{
 		this.className = className;
 		index = indexGenerator.incrementAndGet();
