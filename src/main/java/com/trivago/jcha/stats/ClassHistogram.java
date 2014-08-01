@@ -36,14 +36,16 @@ public class ClassHistogram
 	 * Parses a class histogram file (wirteen by jcmd), and constructs a class histogram instance from it.
 	 * 
 	 * @param file
+	 * @param classFilter 
 	 * @throws IOException
 	 */
-	public ClassHistogram (String file, boolean ignoreKnownDuplicates) throws IOException
+	public ClassHistogram (String file, boolean ignoreKnownDuplicates, Set<String> classFilter) throws IOException
 	{
 		ClassHistogram ch = this; // migrated from method to constructor
 		try (FileInputStream fis = new FileInputStream(new File(file));
 				BufferedReader reader = new BufferedReader(new InputStreamReader(fis));)
 		{
+			boolean useClassFilter = !classFilter.isEmpty();
 			String line;
 			while ((line = reader.readLine()) != null)
 			{
@@ -54,6 +56,13 @@ public class ClassHistogram
 					continue;
 				}
 				String className = row[3];
+				
+				if (useClassFilter && !classFilter.contains(className))
+				{
+					continue; // class not of interest to user
+				}
+
+				
 				ClasssHistogramEntry che = new ClasssHistogramEntry(className, row[1], row[2]);
 				
 				// Ignore duplicated class histogram entries.See:

@@ -2,7 +2,9 @@ package com.trivago.jcha.core;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 public class Parameters
@@ -13,39 +15,64 @@ public class Parameters
 	private int limit = Integer.MAX_VALUE;
 	private boolean showIdentical = false;
 	private boolean ignoreKnownDuplicates = true; // currently always true
+	
+	private Set<String> classFilter = new HashSet<>();
 
+	enum ParameterMode { Automatic, Histogram, ClassName }
+	
 	public void parseArgs(String[] args, int requiredHistograms)
 	{
+		ParameterMode parameterMode = ParameterMode.Automatic;
+		
 		for (int i=0; i<args.length; i++)
 		{
 			String arg = args[i];
-//			System.out.println("parse " + arg);
-			if ( arg.equals("-s"))
+			boolean autoParsed = false;
+			if (parameterMode == ParameterMode.Automatic)
 			{
-				// -s = sort style
-				ensureOneMoreArg(i, args.length);
-				sortStyle = SortStyle.valueOf(args[++i]);
+				autoParsed = true;
+	//			System.out.println("parse " + arg);
+				switch (arg)
+				{
+					case "-s":
+						// -s = sort style
+						ensureOneMoreArg(i, args.length);
+						sortStyle = SortStyle.valueOf(args[++i]);
+						break;
+					case "-n":
+						// -n = number of results (limit)
+						ensureOneMoreArg(i, args.length);
+						limit   = Integer.parseInt(args[++i]);
+						break;
+					case "-i":
+						// -i = show identical
+						showIdentical  = true;
+						break;
+					case "-H":
+					case "--histograms":
+						parameterMode = ParameterMode.Histogram;
+						break;
+					case "-C":
+					case "--classes":
+						parameterMode = ParameterMode.ClassName;
+						break;
+					case "-h":
+					case "--help":
+						// -h = help
+						usage(0);
+						break;
+						
+					default:
+						autoParsed = false;
+							
+				}
 			}
-			else if (arg.equals("-n"))
+			if (!autoParsed)
 			{
-				// -n = number of results (limit)
-				ensureOneMoreArg(i, args.length);
-				limit   = Integer.parseInt(args[++i]);
-			}
-			else if (arg.equals("-i"))
-			{
-				// -i = show identical
-				showIdentical  = true;
-			}
-			else if (arg.equals("-h") || arg.equals("--help"))
-			{
-				// -h = help
-				usage(0);
-			}
-			else
-			{
-//				System.out.println("arg=" +arg);
-				files.add(arg);
+				if (parameterMode == ParameterMode.ClassName)
+					classFilter.add(arg);
+				else
+					files.add(arg);
 			}
 		}
 		if (files.size() < requiredHistograms)
@@ -75,6 +102,8 @@ public class Parameters
 		System.out.println("  -i             Show also identical/unchanged classes");
 		System.out.println("  -n limit       Limit number of shown classes");
 		System.out.println("  -s SortStyle   {" + Arrays.toString(SortStyle.values()) + "} Default=" + sortStyle);
+		System.out.println("  -H | --histograms  All following parameters are treated as histogram file names" );
+		System.out.println("  -C | --classes     All following parameters are treated as fully qualified class names (whitelist)" );
 		if (exitCode != null)
 		{
 			System.exit(exitCode);
@@ -119,6 +148,22 @@ public class Parameters
 	public boolean ignoreKnownDuplicates()
 	{
 		return ignoreKnownDuplicates ;
+	}
+	
+	public boolean isClassAcceptable(String className)
+	{
+		if (classFilter.isEmpty())
+		{
+			// If user has given no classes, then do not filter out any
+			return true;
+		}
+		
+		return classFilter.contains(className);
+	}
+
+	public Set<String> classFilter()
+	{
+		return classFilter;
 	}
 
 }

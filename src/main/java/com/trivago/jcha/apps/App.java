@@ -27,7 +27,7 @@ public class App extends Application
 	public void start(Stage stage)
 	{
 		param.setLimit(20);
-		param.parseArgs(App.args, 0); // -<- This is likely not the endorsed way. Can I pick up the args from launch()?
+		param.parseArgs(App.args, 1); // -<- This is likely not the endorsed way. Can I pick up the args from launch()?
 		List<ClassHistogram> histograms = loadHistograms();
 		int count = histograms.size();
 		
@@ -51,26 +51,22 @@ public class App extends Application
 	        final LineChart<Number,Number> chart = 
 	                new LineChart<Number,Number>(xAxis,yAxis);
 
-//			chart.set
-	
-			
-//			ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList(new PieChart.Data("Grapefruit",
-//					13), new PieChart.Data("Oranges", 25), new PieChart.Data("Plums", 10), new PieChart.Data("Pears", 22),
-//					new PieChart.Data("Apples", 30));
-//			final PieChart chart = new PieChart(pieChartData);
-
 	        String limitText = "";
-	        if (param.getLimit() != 0)
+	        if (!param.classFilter().isEmpty())
+	        {
+	        	limitText = " (filtering for " + param.classFilter().size() + " classes)";
+	        }
+	        else if (param.getLimit() != 0)
 	        {
 	        	limitText = " (class limit " + param.getLimit() + ")"; 
 	        }
 	        
-	        String orderText = " orderBy ignored (impl. pending)";
+	        String orderText = ""; //" orderBy ignored (impl. pending)";
 	        
 			if (count == 1)
-				chart.setTitle("Displaying histogram" + limitText + "\n" + orderText);
+				chart.setTitle("Analyzed 1 histogram" + orderText);
 			else
-				chart.setTitle("Displaying " + count + " histograms" + limitText + orderText);
+				chart.setTitle("Analyzed " + count + " histograms" + limitText + orderText);
 
 			Map<String, XYChart.Series> chartMap = new HashMap<>();
 			
@@ -81,7 +77,11 @@ public class App extends Application
 	
 				for (ClasssHistogramEntry entry : histogram.values())
 				{
-					XYChart.Series series = resolveSeries(chartMap, entry.className, chart);
+					if (!param.isClassAcceptable(entry.className))
+					{
+						continue;
+					}
+					XYChart.Series series = resolveSeries(chartMap, entry.className);
 					
 			        //populating the series with data
 			        series.getData().add(new XYChart.Data(x, entry.instances));
@@ -106,9 +106,16 @@ public class App extends Application
 
 		stage.setScene(scene);
 		stage.show();
-}
+	}
 
-	private Series resolveSeries(Map<String, Series> chartMap, String className, LineChart chart)
+	/**
+	 * Returns the Series for the given className. It is taken from the given Map.
+	 * 
+	 * @param chartMap
+	 * @param className
+	 * @return
+	 */
+	private Series resolveSeries(Map<String, Series> chartMap, String className)
 	{
 		Series series2 = chartMap.get(className);
 		if (series2 != null)
@@ -132,7 +139,7 @@ public class App extends Application
 		{
 			try
 			{
-				histograms.add(new ClassHistogram(files.get(i), param.ignoreKnownDuplicates()));
+				histograms.add(new ClassHistogram(files.get(i), param.ignoreKnownDuplicates(), param.classFilter()));
 			}
 			catch (Exception exc)
 			{
