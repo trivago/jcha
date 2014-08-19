@@ -28,6 +28,8 @@ Shortcut, using a shell alias:
 
 Possible future enhancements.
  - Correlate class statistics to find common characteristics like "growing about the same amount"
- - Select best matching classes for jcha-gui
+ - Auto-selector, that finds most interesting classes for jcha-gui (a graph with 100 classes does not make much sense)
  - Using the classpath of the analysed application, find the culprit class causing a leak.
- 
+ - Optionally use timestamps instead of numbers as x-Axis. Either from file inode (-t [ctime|utime|atime|time])
+   or filename pattern (-t name regexp)
+
