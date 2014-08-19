@@ -38,4 +38,5 @@ Shortcut, using a shell alias:
 
 ## License
 Apache License 2.0
+
 Copyright 2014-present trivago GmbH
