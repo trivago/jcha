@@ -33,7 +33,7 @@ public class ClassHistogram
 	}
 
 	/**
-	 * Parses a class histogram file (wirteen by jcmd), and constructs a class histogram instance from it.
+	 * Parses a class histogram file (written by jcmd), and constructs a class histogram instance from it.
 	 * 
 	 * @param file
 	 * @param classFilter 
@@ -86,8 +86,6 @@ public class ClassHistogram
 					ch.put(className, che);
 				}
 			}
-
-//			return ch;
 		}
 	}
 

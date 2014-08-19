@@ -20,6 +20,16 @@ public class Parameters
 
 	enum ParameterMode { Automatic, Histogram, ClassName }
 	
+	/**
+	 * Sets the fields from the given (command line) arguments. The arguments also contain the
+	 * name(s) of the histogram file(s). If the arguments are invalid, this method will terminate the application
+	 * via {@link System#exit()} and not return. Giving less than requiredHistograms files is considered as 
+	 * invalid arguments. 
+	 *  
+	 * 
+	 * @param args
+	 * @param requiredHistograms
+	 */
 	public void parseArgs(String[] args, int requiredHistograms)
 	{
 		ParameterMode parameterMode = ParameterMode.Automatic;
@@ -86,7 +96,7 @@ public class Parameters
 	{
 		if (i == length-1)
 		{
-			// Alread at last argument => no more => argument error
+			// Already at last argument => no more => argument error
 			usage(1);
 		}
 	}
@@ -98,12 +108,13 @@ public class Parameters
 
 	private void usage(Integer exitCode)
 	{
-		System.out.println("Usage: jcha [-s SortStyle] [-n limit] [-i] file1 file2 [file3 ...]");
+		System.out.println("Usage: jcha [-s SortStyle] [-n limit] [-i] file1 file2 [file3 ...] [-C class1 ...]");
 		System.out.println("  -i             Show also identical/unchanged classes");
 		System.out.println("  -n limit       Limit number of shown classes");
 		System.out.println("  -s SortStyle   {" + Arrays.toString(SortStyle.values()) + "} Default=" + sortStyle);
-		System.out.println("  -H | --histograms  All following parameters are treated as histogram file names" );
-		System.out.println("  -C | --classes     All following parameters are treated as fully qualified class names (whitelist)" );
+		System.out.println("  -H | --histograms  All following parameters are treated as histogram file names (*)" );
+		System.out.println("  -C | --classes     All following parameters are treated as fully qualified class names (whitelist) (*)" );
+		System.out.println("(*) Arguments -C and -H are exclusive - using both is not possible" );
 		if (exitCode != null)
 		{
 			System.exit(exitCode);
