@@ -3,9 +3,10 @@
 jcha is a tool to analyse Java class histograms, focussed on histogram comparison.
 It can aid in debugging memory leaks, or for finding memory dominators before issues arise.
 Supported histogram formats are those from "jcmd pid GC.class_histogram".
+jcha can be run with Java 7 and above.
 
-It can run compare 2 or more histograms, and find correlations between classes.
-You can either use the command line tool jcha  or the JavaFX GUI application jcha-gui.
+It compares two or more histograms, to find classes that change a lot in number of instances
+or size. You can either use the command line tool jcha  or the JavaFX GUI application jcha-gui.
 Both tools support class filtering, by either giving a limit or a class list.
 
 ![GUI screenshot](screenshots/jcha-gui.png "The JavaFX application jcha-gui")
@@ -13,10 +14,19 @@ Both tools support class filtering, by either giving a limit or a class list.
 
 
 ## Building
-Build requires Java 7 and Maven. All other dependencies are pulled in by Maven.
+Build requires Maven and Java 8 (or Java 7, see below). All other dependencies are pulled in by Maven.
 ```
   mvn package
 ```
+
+### Building with Oracle JDK 7
+Requires adding JavaFX to pom.xml. For this you need to uncomment the corresponding
+section containing the jfxrt dependency. See http://zenjava.com/javafx/maven/fix-classpath.html
+why this workaround is necessary.
+
+### Building and running with OpenJDK7
+OpenJDK7 does not always ship with JavaFX included. Not recommended, use OpenJDK8 instead. If you
+really must, then the minimum is to copy a jfxrt.jar to JDK_HOME/jre/lib/ext/ .
 
 ## Running
 You can run jcha directly from the build directory
@@ -46,3 +56,4 @@ Shortcut, using a shell alias:
 Apache License 2.0
 
 Copyright 2014-present trivago GmbH
+

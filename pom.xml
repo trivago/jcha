@@ -15,13 +15,18 @@
 			<scope>test</scope>
 		</dependency>
 
+<!-- JDK7-Workaround: JDK7 does have JavaFX, but not in the regular classpath.
+                      Add the following dependency to add it.
+
 		<dependency>
 			<groupId>javafx</groupId>
 			<artifactId>jfxrt</artifactId>
 			<version>${java.version}</version>
 			<scope>system</scope>
 			<systemPath>${java.home}/lib/jfxrt.jar</systemPath>
+			<optional>true</optional>
 		</dependency>
+-->
 
 	</dependencies>
 	<build>
