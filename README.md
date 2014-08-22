@@ -7,7 +7,7 @@ Supported histogram formats are those from "jcmd pid GC.class_histogram".
 It can run compare 2 or more histograms, and find correlations between classes.
 You can either use the command line tool jcha  or the JavaFX GUI application jcha-gui.
 
-![GUI screenshot](https://gitlab.com/trivago/jcha/screenshots/jcha-gui.png)
+![GUI screenshot](screenshots/jcha-gui.png)
 
 Both tools support class filtering, by either giving a limit or a class list.
 
