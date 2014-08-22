@@ -1,16 +1,19 @@
 # jcha - Java Class Histogram Analyser
 
 jcha is a tool to analyse Java class histograms, focussed on histogram comparison.
-It can aid in debugging memory leaks, or for finding dominators before issues arise.
+It can aid in debugging memory leaks, or for finding memory dominators before issues arise.
 Supported histogram formats are those from "jcmd pid GC.class_histogram".
 
 It can run compare 2 or more histograms, and find correlations between classes.
 You can either use the command line tool jcha  or the JavaFX GUI application jcha-gui.
 
+![GUI screenshot](https://gitlab.com/trivago/jcha/screenshots/jcha-gui.png)
+
 Both tools support class filtering, by either giving a limit or a class list.
 
 
 ## Building
+Build requires Java 7 and Maven. All other dependencies are pulled in by Maven.
   mvn package
 
 ## Running
@@ -32,6 +35,7 @@ Shortcut, using a shell alias:
 ## Possible future enhancements
  * Correlate class statistics to find common characteristics like "growing about the same amount"
  * Auto-selector, that finds most interesting classes for jcha-gui (a graph with 100 classes does not make much sense)
+ * Selecting classes (-C option): Implement pattern-match and also allow path-based class names like java/lang/String
  * Using the classpath of the analysed application, find the culprit class causing a leak.
  * Optionally use timestamps instead of numbers as x-Axis. Either from file inode (-t [ctime|utime|atime|time])
    or filename pattern (-t name regexp)
