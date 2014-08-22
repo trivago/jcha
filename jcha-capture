@@ -1,0 +1,63 @@
+#!/bin/sh
+
+# ---------------------------------------------------------------------------
+# jcha - Java Class Histogram Analyser
+#        Capture script
+# ---------------------------------------------------------------------------
+
+#######################################################################################
+# Copyright 2014-present trivago GmbH
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#######################################################################################
+
+if test $# = 0 -o  $# -gt 4; then
+ echo "Usage: $0 [ [count] delaySeconds ] pid filnamePrefix"
+ exit 1
+fi
+
+delaySecs=10
+rounds=infinite
+
+if test $# = 4; then
+  rounds=$1
+  shift
+fi
+if test $# = 3; then
+  delaySecs=$1
+  shift
+fi
+if test $# = 2; then
+  thepid=$1
+  shift
+fi
+if test $# = 1; then
+  filePrefix=$1
+  shift
+fi
+
+echo "Start capturing pid=${thepid} on ${filePrefix}.<datetime>.jch, delay=${delaySecs}s, count=${rounds}"
+if test "x$count" = "xinfinite"; then
+   echo "Running infitibly long. Press CTRL-c to stop"
+fi
+
+while test $rounds != 0; do
+    dts=`date '+%Y%m%d-%H%M%S'`
+    currentFileName=${filePrefix}-${dts}.jch
+    echo $currentFileName
+    jcmd ${thepid} GC.class_histogram > $currentFileName
+    sleep $delaySecs
+    if test "x$count" != "xinfinite"; then
+        let rounds-=1
+    fi
+done
