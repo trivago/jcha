@@ -2,10 +2,11 @@
 
 jcha is a tool to analyse Java class histograms, focussed on histogram comparison.
 It can aid in debugging memory leaks, or for finding memory dominators before issues arise.
-Supported histogram formats are those from "jcmd pid GC.class_histogram".
-jcha can be run with Java 7 and above.
+jcha reads histogram written by "jcmd pid GC.class_histogram". It is best to
+capture multiple histograms, so this package also contains jcha-capture, a script for
+time-based histogram capturing.
 
-It compares two or more histograms, to find classes that change a lot in number of instances
+Two or more histograms can be compared, to find classes that change a lot in number of instances
 or size. You can either use the command line tool jcha  or the JavaFX GUI application jcha-gui.
 Both tools support class filtering, by either giving a limit or a class list.
 
@@ -29,12 +30,16 @@ OpenJDK7 does not always ship with JavaFX included. Not recommended, use OpenJDK
 really must, then the minimum is to copy a jfxrt.jar to JDK_HOME/jre/lib/ext/ .
 
 ## Running
-You can run jcha directly from the build directory
+You can run jcha directly from the build directory. It requires Java 7 or above.
+jcha-gui requires JavaFX to be in the classpath. All Java 8 and some Java 7 installations fulfill this dependency.
 ```
- jcha histogram1 histogram2
- jcha -h  # for showing help on all options like sorting
+ jcha-capture 100 10 pid filnamePrefix               # Capture 100 histograms, delay between is 10 seconds
+ jcmd pid GC.class_histogram > classhistogram01.jch  # Capture a single histogram, directly with jcmd from JDK
+
+ jcha classhistogram01.jch classhistogram02.jch      # Start jcha with 2 *.jch files in the directory
+ jcha -h                                             # for showing help on all options like sorting
  
- jcha-gui histogram1 histogram2
+ jcha-gui *.jch                                      # Start GUI with all *.jch files in the directory
 ```
 
 Shortcut, using a shell alias:
