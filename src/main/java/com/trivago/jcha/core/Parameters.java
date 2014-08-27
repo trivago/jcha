@@ -60,44 +60,57 @@ public class Parameters
 			{
 				autoParsed = true;
 	//			System.out.println("parse " + arg);
-				switch (arg)
+				try
 				{
-					case "-s":
-						// -s = sort style
-						ensureOneMoreArg(i, args.length);
-						sortStyle = SortStyle.valueOf(args[++i]);
-						break;
-					case "-n":
-						// -n = number of results (limit)
-						ensureOneMoreArg(i, args.length);
-						limit   = Integer.parseInt(args[++i]);
-						break;
-					case "-i":
-						// -i = show identical
-						showIdentical  = true;
-						break;
-					case "-g":
-						// -g = grouping percentage
-						ensureOneMoreArg(i, args.length);
-						maxGroupingPercentage = Double.parseDouble(args[++i]);
-						break;
-					case "-H":
-					case "--histograms":
-						parameterMode = ParameterMode.Histogram;
-						break;
-					case "-C":
-					case "--classes":
-						parameterMode = ParameterMode.ClassName;
-						break;
-					case "-h":
-					case "--help":
-						// -h = help
-						usage(0);
-						break;
-						
-					default:
-						autoParsed = false;
+					switch (arg)
+					{
+						case "-s":
+							// -s = sort style
+							ensureOneMoreArg(i, args.length);
+							sortStyle = SortStyle.valueOf(args[++i]);
+							break;
+						case "-n":
+							// -n = number of results (limit)
+							ensureOneMoreArg(i, args.length);
+							limit   = Integer.parseInt(args[++i]);
+							break;
+						case "-i":
+							// -i = show identical
+							showIdentical  = true;
+							break;
+						case "-g":
+							// -g = grouping percentage
+							ensureOneMoreArg(i, args.length);
+							maxGroupingPercentage = Double.parseDouble(args[++i]);
+							break;
+						case "-H":
+						case "--histograms":
+							parameterMode = ParameterMode.Histogram;
+							break;
+						case "-C":
+						case "--classes":
+							parameterMode = ParameterMode.ClassName;
+							break;
+						case "-h":
+						case "--help":
+							// -h = help
+							usage(0);
+							break;
 							
+						default:
+							autoParsed = false;
+								
+					}
+				}
+				catch (NumberFormatException nfe)
+				{
+					System.err.println("Error: Argument for " + arg + " must be numeric");
+					System.exit(1);
+				}
+				catch (Exception exc)
+				{
+					System.err.println("Error: Parsing for argument " + arg + " failed: " + exc);
+					System.exit(1);					
 				}
 			}
 			if (!autoParsed)
