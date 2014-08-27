@@ -28,6 +28,7 @@ import com.trivago.jcha.comparator.BaseComparator;
 import com.trivago.jcha.comparator.RelativeInstancesComparator;
 import com.trivago.jcha.comparator.RelativeSizeComparator;
 import com.trivago.jcha.core.Parameters;
+import com.trivago.jcha.core.SortStyle;
 import com.trivago.jcha.stats.ClassHistogram;
 import com.trivago.jcha.stats.ClassHistogramStats;
 import com.trivago.jcha.stats.ClassHistogramStatsEntry;
@@ -49,8 +50,14 @@ public class JavaClassHistogramAnalyzer
 	}
 	
 
+	/**
+	 * Read all histograms, and compare the first half with the last half.
+	 * 
+	 * @throws IOException
+	 */
 	private void work() throws IOException
 	{
+		// -1- Read histograms -------------------------------------------------
 		List<String> files = param.getFiles();
 		int histCountFiles = files.size();
 		List<ClassHistogram> histograms = new ArrayList<>(histCountFiles);
@@ -66,21 +73,24 @@ public class JavaClassHistogramAnalyzer
 			}
 		}
 
-		// Any invalid
+		// -2- Calculate average of first and second half -------------------------------------------------
 		int histCount = histograms.size();
 
 		final ClassHistogram ch1;
 		final ClassHistogram ch2;
 		if (histCount == 2)
 		{
+			// Trivial case
 			ch1 = histograms.get(0);
 			ch2 = histograms.get(histograms.size()-1);
 		}
 		else
 		{
+			// Less trivial case: Run average on first half and second half
+			int midOfArraySkip = histCount %2 == 0 ? 1 : 0; // even number of histograms => skip "mid" in first half 
 			int midOfArray = Math.round(histCount/2.0f) - 1; // 3 => 1  ; 4 => 2 ; 5 => 2
-			ch1 = buildAverageHistogram(histograms, 0 , midOfArray);
-			ch2 = buildAverageHistogram(histograms, midOfArray , histCount-1);
+			ch1 = buildAverageHistogram(histograms, 0 , midOfArray-midOfArraySkip);
+			ch2 = buildAverageHistogram(histograms, midOfArray, histCount-1);
 		}
 		
 		ClassHistogramStats stats = calculateDiff(ch1, ch2);
@@ -88,6 +98,8 @@ public class JavaClassHistogramAnalyzer
 		ClassHistogramStats stats2 = stats.ignoreHarmless(param.showIdentical() , 0,0);
 //		ClassHistogramStats stats2 = stats.ignoreHarmless(showEqual, 100,0);
 		
+		
+		// -3- Sort histogram entries -------------------------------------------
 		BaseComparator comparator = null;
 		switch (param.getSortStyle())
 		{
@@ -102,16 +114,90 @@ public class JavaClassHistogramAnalyzer
 			statsSorted.add(entry);
 		}
 		
+		boolean showDivisors = param.getSortStyle() == SortStyle.AbsCount;
+		
+		
+		// -4- Print histograms ----------------------------------------------
 		int pos = 0;
+		Integer lastValue = null;
+		int similarValueCount = 0;
 		for (ClassHistogramStatsEntry entry : statsSorted)
-		{
-			System.out.println(entry);
-			pos++;
-			if (pos == param.getLimit())
+		{	
+			if (pos++ == param.getLimit())
 			{
 				break;
 			}
+			
+			int newValue = entry.getInstanceDiff();
+			double percentageDiffFromGroupStart = percentageDiff(lastValue, newValue);
+			
+			if (lastValue == null)
+			{
+				// First loop iteration: Always starts a possible new group
+				lastValue = newValue;
+				similarValueCount = 1;
+			}
+			else if (percentageDiffFromGroupStart < param.getMaxGroupingPercentage())
+			{
+//				if (similarValueCount == 0)
+//				{
+//					// new (possible) group start 
+//					lastValue = newValue;
+//				}
+				similarValueCount ++;
+			}
+			else
+			{
+				if (similarValueCount > 1)
+				{
+					if (showDivisors)
+						System.out.println("--- Group started at " + lastValue + " ends ----------------------------------------------");
+				}
+				
+				// reset stats
+				lastValue = newValue;
+				similarValueCount = 1; // current entry is start of possible new group
+			}
+			
+			System.out.println(entry);
+
 		}
+	}
+
+	/**
+	 * Returns the relative change in percent between lastValue and newValue.
+	 * It treats the first call (lastValue == null). or if the
+	 * relative change cannot be mathematically computed, 
+	 * 
+	 * @param lastValue
+	 * @param newValue
+	 * @return
+	 */
+	private double percentageDiff(Integer lastValue, int newValue)
+	{
+		if (lastValue == null)
+			return 0;
+		
+		if (newValue == 0)
+		{
+			// Special case, to avoid division by zero
+			if (lastValue == 0)
+				return 0;
+			else
+				return 100; // changed from something to 0 => 100% change
+		}
+
+//		double d = (lastValue* 100.0D /newValue );
+//		double d2 = d -100;
+//		System.out.println("l=" + lastValue + ", n="+ newValue + " => " + d2);
+		
+		lastValue = Math.abs(lastValue);
+		newValue  = Math.abs(newValue);
+		
+		if (lastValue > newValue)
+			return (lastValue* 100.0D /newValue )-100;
+		else
+			return (newValue * 100.0D /lastValue)-100;
 	}
 
 	private ClassHistogram buildAverageHistogram(List<ClassHistogram> histograms, int startIndex, int endIndex)

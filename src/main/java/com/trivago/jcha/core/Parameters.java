@@ -33,6 +33,8 @@ public class Parameters
 	private boolean ignoreKnownDuplicates = true; // currently always true
 	
 	private Set<String> classFilter = new HashSet<>();
+	public final static double MaxGroupingPercentageDefault = 0.5;
+	private double maxGroupingPercentage = MaxGroupingPercentageDefault;
 
 	enum ParameterMode { Automatic, Histogram, ClassName }
 	
@@ -73,6 +75,11 @@ public class Parameters
 					case "-i":
 						// -i = show identical
 						showIdentical  = true;
+						break;
+					case "-g":
+						// -g = grouping percentage
+						ensureOneMoreArg(i, args.length);
+						maxGroupingPercentage = Double.parseDouble(args[++i]);
 						break;
 					case "-H":
 					case "--histograms":
@@ -128,6 +135,7 @@ public class Parameters
 		System.out.println("  -i             Show also identical/unchanged classes");
 		System.out.println("  -n limit       Limit number of shown classes");
 		System.out.println("  -s SortStyle   {" + Arrays.toString(SortStyle.values()) + "} Default=" + sortStyle);
+		System.out.println("  -g percent     For SortStyle AbsCount: Mark classes differing less than given percentage as a group (default: " + MaxGroupingPercentageDefault +"). 0=no grouping. (console only)" );
 		System.out.println("  -H | --histograms  All following parameters are treated as histogram file names (*)" );
 		System.out.println("  -C | --classes     All following parameters are treated as fully qualified class names (whitelist) (*)" );
 		System.out.println("(*) Arguments -C and -H are exclusive - using both is not possible" );
@@ -191,6 +199,11 @@ public class Parameters
 	public Set<String> classFilter()
 	{
 		return classFilter;
+	}
+
+	public double getMaxGroupingPercentage()
+	{
+		return maxGroupingPercentage;
 	}
 
 }
