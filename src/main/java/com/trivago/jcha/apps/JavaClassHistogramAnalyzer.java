@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.sound.midi.SysexMessage;
+
 import com.trivago.jcha.comparator.AbsoluteInstancesComparator;
 import com.trivago.jcha.comparator.AbsoluteSizeComparator;
 import com.trivago.jcha.comparator.BaseComparator;
@@ -78,7 +80,13 @@ public class JavaClassHistogramAnalyzer
 
 		final ClassHistogram ch1;
 		final ClassHistogram ch2;
-		if (histCount == 2)
+		if (histCount < 2)
+		{
+			System.err.println("Error: Less than 2 histogram files could be parsed. Please check file types and permissions. Cannot continue.");
+			ch1 = ch2 = null; // << make javac happy (local vars are final)
+			System.exit(1);
+		}
+		else if (histCount == 2)
 		{
 			// Trivial case
 			ch1 = histograms.get(0);

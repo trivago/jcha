@@ -66,13 +66,11 @@ public class Parameters
 					{
 						case "-s":
 							// -s = sort style
-							ensureOneMoreArg(i, args.length);
-							sortStyle = SortStyle.valueOf(args[++i]);
+							sortStyle = SortStyle.valueOf(nextArg(++i, args));
 							break;
 						case "-n":
 							// -n = number of results (limit)
-							ensureOneMoreArg(i, args.length);
-							limit   = Integer.parseInt(args[++i]);
+							limit   = Integer.parseInt(nextArg(++i, args));
 							break;
 						case "-i":
 							// -i = show identical
@@ -80,8 +78,7 @@ public class Parameters
 							break;
 						case "-g":
 							// -g = grouping percentage
-							ensureOneMoreArg(i, args.length);
-							maxGroupingPercentage = Double.parseDouble(args[++i]);
+							maxGroupingPercentage = Double.parseDouble(nextArg(++i, args));
 							break;
 						case "-H":
 						case "--histograms":
@@ -107,6 +104,11 @@ public class Parameters
 					System.err.println("Error: Argument for " + arg + " must be numeric");
 					System.exit(1);
 				}
+				catch (IllegalArgumentException iae)
+				{
+					System.err.println("Error while parsing parameter " + arg + ": " + iae.getMessage());
+					System.exit(1);
+				}
 				catch (Exception exc)
 				{
 					System.err.println("Error: Parsing for argument " + arg + " failed: " + exc);
@@ -128,13 +130,22 @@ public class Parameters
 		}
 	}
 
-	private void ensureOneMoreArg(int i, int length)
+	/**
+	 * Returns the next argument from the command line, or throws IllegalArgumentException
+	 * if there is no more argument left.
+	 * @param i
+	 * @param args
+	 * @return
+	 */
+	private String nextArg(int i, String[] args)
 	{
-		if (i == length-1)
+		int length = args.length;
+		if (i == length)
 		{
 			// Already at last argument => no more => argument error
-			usage(1);
+			throw new IllegalArgumentException("Argument missing");
 		}
+		return args[i];
 	}
 
 	void usage()
@@ -148,7 +159,7 @@ public class Parameters
 		System.out.println("  -i             Show also identical/unchanged classes");
 		System.out.println("  -n limit       Limit number of shown classes");
 		System.out.println("  -s SortStyle   {" + Arrays.toString(SortStyle.values()) + "} Default=" + sortStyle);
-		System.out.println("  -g percent     For SortStyle AbsCount: Mark classes differing less than given percentage as a group (default: " + MaxGroupingPercentageDefault +"). 0=no grouping. (console only)" );
+		System.out.println("  -g percent     For SortStyle AbsCount: Mark classes differing less than given percentage as a group (default: " + MaxGroupingPercentageDefault +"). 0=no grouping." );
 		System.out.println("  -H | --histograms  All following parameters are treated as histogram file names (*)" );
 		System.out.println("  -C | --classes     All following parameters are treated as fully qualified class names (whitelist) (*)" );
 		System.out.println("(*) Arguments -C and -H are exclusive - using both is not possible" );
