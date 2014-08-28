@@ -17,7 +17,7 @@ Both tools support class filtering, by either giving a limit or a class list.
 ## Building
 Build requires Maven and Java 8 (or Java 7, see below). All other dependencies are pulled in by Maven.
 ```
-  mvn package
+  mvn package assembly:single
 ```
 
 ### Building with Oracle JDK 7
