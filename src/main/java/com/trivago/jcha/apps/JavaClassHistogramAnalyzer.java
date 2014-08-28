@@ -19,26 +19,33 @@ package com.trivago.jcha.apps;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
-import javax.sound.midi.SysexMessage;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.trivago.jcha.comparator.AbsoluteInstancesComparator;
 import com.trivago.jcha.comparator.AbsoluteSizeComparator;
 import com.trivago.jcha.comparator.BaseComparator;
+import com.trivago.jcha.comparator.ComparatorFactory;
 import com.trivago.jcha.comparator.RelativeInstancesComparator;
 import com.trivago.jcha.comparator.RelativeSizeComparator;
 import com.trivago.jcha.core.Parameters;
 import com.trivago.jcha.core.SortStyle;
+import com.trivago.jcha.correlation.CorrelationFactory;
+import com.trivago.jcha.correlation.Correlator;
+import com.trivago.jcha.correlation.BaseCorrelator;
 import com.trivago.jcha.stats.ClassHistogram;
 import com.trivago.jcha.stats.ClassHistogramStats;
 import com.trivago.jcha.stats.ClassHistogramStatsEntry;
-import com.trivago.jcha.stats.ClasssHistogramEntry;
+import com.trivago.jcha.stats.ClassHistogramEntry;
 
 public class JavaClassHistogramAnalyzer
 {
-	private Parameters param = new Parameters();
+    static final Logger logger = LogManager.getLogger(JavaClassHistogramAnalyzer.class);
+    private Parameters param = new Parameters();
 	
 	public static void main(String[] args) throws IOException
 	{
@@ -60,20 +67,7 @@ public class JavaClassHistogramAnalyzer
 	private void work() throws IOException
 	{
 		// -1- Read histograms -------------------------------------------------
-		List<String> files = param.getFiles();
-		int histCountFiles = files.size();
-		List<ClassHistogram> histograms = new ArrayList<>(histCountFiles);
-		for (int i=0; i< histCountFiles; i++)
-		{
-			try
-			{
-				histograms.add(new ClassHistogram(files.get(i), param.ignoreKnownDuplicates(), param.classFilter()));
-			}
-			catch (Exception exc)
-			{
-				warn("Ignoring histogram: " + exc.getMessage());
-			}
-		}
+		List<ClassHistogram> histograms = readHistograms();
 
 		// -2- Calculate average of first and second half -------------------------------------------------
 		int histCount = histograms.size();
@@ -102,74 +96,63 @@ public class JavaClassHistogramAnalyzer
 		}
 		
 		ClassHistogramStats stats = calculateDiff(ch1, ch2);
-		
-		ClassHistogramStats stats2 = stats.ignoreHarmless(param.showIdentical() , 0,0);
-//		ClassHistogramStats stats2 = stats.ignoreHarmless(showEqual, 100,0);
+		ClassHistogramStats statsFiltered = stats.ignoreHarmless(param.showIdentical() , 0,0);
 		
 		
-		// -3- Sort histogram entries -------------------------------------------
-		BaseComparator comparator = null;
-		switch (param.getSortStyle())
-		{
-			case AbsCount: comparator = new AbsoluteInstancesComparator(); break;
-			case RelCount: comparator = new RelativeInstancesComparator(); break;
-			case AbsSize: comparator = new AbsoluteSizeComparator(); break;
-			case RelSize: comparator = new RelativeSizeComparator(); break;
-		}
+		// -3- Feed the Correlator -------------------------------------------
+		BaseComparator comparator = ComparatorFactory.get(param.getSortStyle());
+		BaseCorrelator correlator = CorrelationFactory.get(param.getSortStyle());
+		correlator.setMaxGroupingPercentage(param.getMaxGroupingPercentage());
+		
+		// Correlators currently need to be fed with sorted data ==> sort the data
 		Set<ClassHistogramStatsEntry> statsSorted = new TreeSet<>(comparator);
-		for (ClassHistogramStatsEntry entry : stats2.stats.values())
+		for (ClassHistogramStatsEntry entry : statsFiltered.stats.values())
 		{
 			statsSorted.add(entry);
 		}
-		
-		boolean showDivisors = param.getSortStyle() == SortStyle.AbsCount;
-		
+		for (ClassHistogramStatsEntry entry : statsSorted)
+		{
+			correlator.addValueSorted(entry);
+		}
+
 		
 		// -4- Print histograms ----------------------------------------------
 		int pos = 0;
-		Integer lastValue = null;
-		int similarValueCount = 0;
-		for (ClassHistogramStatsEntry entry : statsSorted)
-		{	
-			if (pos++ == param.getLimit())
-			{
-				break;
-			}
-			
-			int newValue = entry.getInstanceDiff();
-			double percentageDiffFromGroupStart = percentageDiff(lastValue, newValue);
-			
-			if (lastValue == null)
-			{
-				// First loop iteration: Always starts a possible new group
-				lastValue = newValue;
-				similarValueCount = 1;
-			}
-			else if (percentageDiffFromGroupStart < param.getMaxGroupingPercentage())
-			{
-//				if (similarValueCount == 0)
-//				{
-//					// new (possible) group start 
-//					lastValue = newValue;
-//				}
-				similarValueCount ++;
-			}
-			else
-			{
-				if (similarValueCount > 1)
-				{
-					if (showDivisors)
-						System.out.println("--- Group started at " + lastValue + " ends ----------------------------------------------");
-				}
-				
-				// reset stats
-				lastValue = newValue;
-				similarValueCount = 1; // current entry is start of possible new group
-			}
-			
-			System.out.println(entry);
+		System.out.println(correlator.getGroups().size() + " groups were detected, for simalarity " + param.getMaxGroupingPercentage() + "%");
 
+outer:	for (Entry<String, ArrayList<ClassHistogramStatsEntry>> groupEntry : correlator.getGroups().entrySet())
+		{
+			String key = groupEntry.getKey();
+			ArrayList<ClassHistogramStatsEntry> group = groupEntry.getValue();
+			System.out.println("--- Group start --------------------------------------------------------");
+			for (ClassHistogramStatsEntry entry : group)
+			{
+				System.out.println(entry);
+				if (pos++ == param.getLimit())
+				{
+					break outer;
+				}
+			}
 		}
+	}
+
+	private List<ClassHistogram> readHistograms()
+	{
+		List<String> files = param.getFiles();
+		int histCountFiles = files.size();
+		List<ClassHistogram> histograms = new ArrayList<>(histCountFiles);
+		for (int i=0; i< histCountFiles; i++)
+		{
+			try
+			{
+				histograms.add(new ClassHistogram(files.get(i), param.ignoreKnownDuplicates(), param.classFilter()));
+			}
+			catch (Exception exc)
+			{
+				warn("Ignoring histogram: " + exc.getMessage());
+			}
+		}
+		return histograms;
 	}
 
 	/**
@@ -216,10 +199,10 @@ public class JavaClassHistogramAnalyzer
 		for (int i=startIndex; i<= endIndex; i++)
 		{
 			ClassHistogram ch = histograms.get(i);
-			for (ClasssHistogramEntry che : ch.values())
+			for (ClassHistogramEntry che : ch.values())
 			{
 				String key = che.className;
-				ClasssHistogramEntry cheCombined = combined.get(key);
+				ClassHistogramEntry cheCombined = combined.get(key);
 				if (cheCombined == null)
 				{
 					cheCombined = che.clone();
@@ -233,7 +216,7 @@ public class JavaClassHistogramAnalyzer
 			}
 		}
 		
-		for (ClasssHistogramEntry che : combined.values())
+		for (ClassHistogramEntry che : combined.values())
 		{
 			che.instances = Math.round(che.instances / (float)count); // Rounding up: 1/2 => 1
 			che.bytes = Math.round(che.bytes / (float)count);
@@ -244,17 +227,16 @@ public class JavaClassHistogramAnalyzer
 
 	private void warn(String message)
 	{
-		System.err.println(message);
-		// TODO Migrate to logger
+		logger.warn(message);
 	}
 
 	private ClassHistogramStats calculateDiff(ClassHistogram ch1, ClassHistogram ch2)
 	{
 		ClassHistogramStats stats = new ClassHistogramStats();
-		for (ClasssHistogramEntry che1 : ch1.values())
+		for (ClassHistogramEntry che1 : ch1.values())
 		{
 			String key = che1.className;
-			ClasssHistogramEntry che2 = ch2.get(key);
+			ClassHistogramEntry che2 = ch2.get(key);
 			if (che2 == null)
 			{
 				errorcollector("Class disappeared in second file: " + key);

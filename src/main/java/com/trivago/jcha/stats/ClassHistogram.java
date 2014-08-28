@@ -37,7 +37,7 @@ public class ClassHistogram
 	private static final boolean DEBUGPARSER = false;
 
 	// key is class name (as String)
-	private Map<String, ClasssHistogramEntry> id2entry = new HashMap<>();
+	private Map<String, ClassHistogramEntry> id2entry = new HashMap<>();
 	private String description;
 
 	/**
@@ -79,7 +79,7 @@ public class ClassHistogram
 				}
 
 				
-				ClasssHistogramEntry che = new ClasssHistogramEntry(className, row[1], row[2]);
+				ClassHistogramEntry che = new ClassHistogramEntry(className, row[1], row[2]);
 				
 				// Ignore duplicated class histogram entries.See:
 				// http://stackoverflow.com/questions/24746998/why-are-the-java-class-histogram-entries-from-jcmd-not-unique
@@ -121,14 +121,14 @@ public class ClassHistogram
 	public String toString()
 	{
 		StringBuffer sb = new StringBuffer();
-		for (ClasssHistogramEntry entry : id2entry.values())
+		for (ClassHistogramEntry entry : id2entry.values())
 		{
 			sb.append(entry).append(System.lineSeparator());
 		}
 		return sb.toString();
 	}
 
-	public void put(String className, ClasssHistogramEntry che)
+	public void put(String className, ClassHistogramEntry che)
 	{
 		id2entry.put(className, che);
 	}
@@ -138,7 +138,7 @@ public class ClassHistogram
 		return id2entry.containsKey(className);
 	}
 
-	public ClasssHistogramEntry get(String className)
+	public ClassHistogramEntry get(String className)
 	{
 		return id2entry.get(className);
 	}
@@ -148,7 +148,7 @@ public class ClassHistogram
 		return id2entry.keySet();
 	}
 
-	public Collection<ClasssHistogramEntry> values()
+	public Collection<ClassHistogramEntry> values()
 	{
 		return id2entry.values();
 	}

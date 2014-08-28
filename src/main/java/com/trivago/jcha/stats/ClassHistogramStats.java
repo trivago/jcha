@@ -42,6 +42,14 @@ public class ClassHistogramStats
 		return sb.toString();
 	}
 
+	/**
+	 * Returns a copy of this object, with the filters given in the arguments applied.
+	 * 
+	 * @param showEqual
+	 * @param minInstanceDiff
+	 * @param minByteDiff
+	 * @return
+	 */
 	public ClassHistogramStats ignoreHarmless(boolean showEqual, int minInstanceDiff, int minByteDiff)
 	{
 		if (minInstanceDiff < 0)
@@ -78,7 +86,5 @@ public class ClassHistogramStats
 			newStats.stats.put(key, chse);
 		}
 		return newStats;
-	}
-	
-	
+	}	
 }

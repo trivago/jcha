@@ -32,7 +32,7 @@ import javafx.scene.chart.XYChart.Series;
 import javafx.stage.Stage;
 
 import com.trivago.jcha.stats.ClassHistogram;
-import com.trivago.jcha.stats.ClasssHistogramEntry;
+import com.trivago.jcha.stats.ClassHistogramEntry;
 
 public class App extends Application
 {
@@ -91,7 +91,7 @@ public class App extends Application
 			{
 				int limit = param.getLimit();
 	
-				for (ClasssHistogramEntry entry : histogram.values())
+				for (ClassHistogramEntry entry : histogram.values())
 				{
 					if (!param.isClassAcceptable(entry.className))
 					{
