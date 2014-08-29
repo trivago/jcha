@@ -24,6 +24,7 @@ public class ClassHistogramStatsEntry
 	static final AtomicInteger indexGenerator = new AtomicInteger();
 
 	final String className;
+
 	final int index;
 	long byteDiff;
 	int instanceDiff;
@@ -109,5 +110,14 @@ public class ClassHistogramStatsEntry
 	public int getIndex()
 	{
 		return index;
+	}
+
+	/**
+	 * Returns the ID of this entry, which is the class name.
+	 * @return the className
+	 */
+	public String id()
+	{
+		return className;
 	}
 }
