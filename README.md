@@ -49,13 +49,17 @@ Shortcut, using a shell alias:
  alias jcha-gui=$path/jcha-gui
 ```
 
-## Possible future enhancements
+## Enhancements done since initial version
  * Correlate class statistics to find common characteristics like "growing about the same amount"
  * Auto-selector, that finds most interesting classes for jcha-gui (a graph with 100 classes does not make much sense)
+## Possible future enhancements
  * Selecting classes (-C option): Implement pattern-match and also allow path-based class names like java/lang/String
  * Using the classpath of the analysed application, find the culprit class causing a leak.
  * Optionally use timestamps instead of numbers as x-Axis. Either from file inode (-t [ctime|utime|atime|time])
    or filename pattern (-t name regexp)
+
+## Known bugs
+ * Class name caption is missing in jcha-gui when showing 10 classes or more. 
 
 ## License
 Apache License 2.0

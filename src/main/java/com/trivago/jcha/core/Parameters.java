@@ -22,7 +22,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.trivago.jcha.apps.Version;
 
+/**
+ * Parameters for the jcha applications. The values all have a sensible default value.
+ * The defaults can be overriden by the user by command line parameters, see {@link #parseArgs(String[], int)}.
+ * Also the application sometimes overrides the default by automatically determining a dynamic value from
+ * other parameters or the read histograms, for example see {@link #overrideClassFilter(Set)}.
+ *  
+ * @author cesken
+ *
+ */
 public class Parameters
 {
 	
@@ -46,11 +56,13 @@ public class Parameters
 	 *  
 	 * 
 	 * @param args
+	 * @param executableName The name how the program is normally called (used for --help only)
 	 * @param requiredHistograms
 	 */
-	public void parseArgs(String[] args, int requiredHistograms)
+	public void parseArgs(String[] args, String executableName, int requiredHistograms)
 	{
 		ParameterMode parameterMode = ParameterMode.Automatic;
+		System.out.println("a=" + args);
 		
 		for (int i=0; i<args.length; i++)
 		{
@@ -59,7 +71,6 @@ public class Parameters
 			if (parameterMode == ParameterMode.Automatic)
 			{
 				autoParsed = true;
-	//			System.out.println("parse " + arg);
 				try
 				{
 					switch (arg)
@@ -91,8 +102,13 @@ public class Parameters
 						case "-h":
 						case "--help":
 							// -h = help
-							usage(0);
+							usage(0, executableName);
 							break;
+						case "-v":
+						case "--version":
+							// -v = version
+							System.out.println(executableName + " " + Version.versionString());
+							System.exit(0);
 							
 						default:
 							autoParsed = false;
@@ -126,7 +142,7 @@ public class Parameters
 		if (files.size() < requiredHistograms)
 		{
 			System.err.println("Less than " + requiredHistograms + " files specified");
-			usage(1);
+			usage(1, executableName);
 		}
 	}
 
@@ -148,18 +164,14 @@ public class Parameters
 		return args[i];
 	}
 
-	void usage()
+	private void usage(Integer exitCode, String executableName)
 	{
-		usage(null);
-	}
-
-	private void usage(Integer exitCode)
-	{
-		System.out.println("Usage: jcha [-s SortStyle] [-n limit] [-i] file1 file2 [file3 ...] [-C class1 ...]");
+		System.out.println("Usage: " + executableName + " [-s SortStyle] [-n limit] [-i] file1 file2 [file3 ...] [-C class1 ...]");
 		System.out.println("  -i             Show also identical/unchanged classes");
 		System.out.println("  -n limit       Limit number of shown classes");
 		System.out.println("  -s SortStyle   {" + Arrays.toString(SortStyle.values()) + "} Default=" + sortStyle);
 		System.out.println("  -g percent     For SortStyle AbsCount: Mark classes differing less than given percentage as a group (default: " + MaxGroupingPercentageDefault +"). 0=no grouping." );
+		System.out.println("  -v | -- version    Show version information");
 		System.out.println("  -H | --histograms  All following parameters are treated as histogram file names (*)" );
 		System.out.println("  -C | --classes     All following parameters are treated as fully qualified class names (whitelist) (*)" );
 		System.out.println("(*) Arguments -C and -H are exclusive - using both is not possible" );
@@ -228,6 +240,15 @@ public class Parameters
 	public double getMaxGroupingPercentage()
 	{
 		return maxGroupingPercentage;
+	}
+
+	/**
+	 * Allows to override the classFilter. Usable when the classFilter is automatically calculated.
+	 * @param classFilter
+	 */
+	public void overrideClassFilter(Set<String> classFilter)
+	{
+		this.classFilter = classFilter;
 	}
 
 }

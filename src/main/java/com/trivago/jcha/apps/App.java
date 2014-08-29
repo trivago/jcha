@@ -18,8 +18,11 @@ package com.trivago.jcha.apps;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import javafx.application.Application;
 import javafx.collections.ObservableList;
@@ -31,8 +34,13 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.chart.XYChart.Series;
 import javafx.stage.Stage;
 
+import com.trivago.jcha.core.HistogramAverager;
+import com.trivago.jcha.core.JchaUtil;
+import com.trivago.jcha.correlation.BaseCorrelator;
 import com.trivago.jcha.stats.ClassHistogram;
 import com.trivago.jcha.stats.ClassHistogramEntry;
+import com.trivago.jcha.stats.ClassHistogramStats;
+import com.trivago.jcha.stats.ClassHistogramStatsEntry;
 
 public class App extends Application
 {
@@ -42,10 +50,13 @@ public class App extends Application
 	@Override
 	public void start(Stage stage)
 	{
-		param.setLimit(20);
-		param.parseArgs(App.args, 1); // -<- This is likely not the endorsed way. Can I pick up the args from launch()?
+		if (param.getLimit() <= 0)
+			param.setLimit(20);
+		param.parseArgs(App.args, "jcha-gui", 1); // -<- This is likely not the endorsed way. Can I pick up the args from launch()?
 		List<ClassHistogram> histograms = loadHistograms();
 		int count = histograms.size();
+		
+		param.overrideClassFilter(calculateClassFilter(histograms));
 		
 		Scene scene = new Scene(new Group());
 		stage.setWidth(800);
@@ -122,6 +133,43 @@ public class App extends Application
 
 		stage.setScene(scene);
 		stage.show();
+	}
+
+	/**
+	 * Returns a class filter that is most appropriate for the given histograms and the Parameters
+	 * field from this object.
+	 * If the user has explicitly specified a filter, no calculation is done - the user filter is returned as-is.
+	 * 
+	 * @param histograms
+	 * @param classFilter
+	 * @param limit
+	 * @return
+	 */
+	private Set<String> calculateClassFilter(List<ClassHistogram> histograms)
+	{
+		if (!param.classFilter().isEmpty())
+			return param.classFilter();
+		
+		Set<String> classFilter = new HashSet<>();
+		ClassHistogramStats statsFiltered = HistogramAverager.compareFirstWithSecondHalf(histograms, param);
+		BaseCorrelator correlator = JchaUtil.correlate(statsFiltered, param);
+		
+		int pos = 0;
+outer:	for (Entry<String, ArrayList<ClassHistogramStatsEntry>> groupEntry : correlator.getGroups().entrySet())
+		{
+			String key = groupEntry.getKey();
+			ArrayList<ClassHistogramStatsEntry> group = groupEntry.getValue();
+			for (ClassHistogramStatsEntry entry : group)
+			{
+				classFilter.add(entry.id());
+				if (++pos == param.getLimit())
+				{
+					break outer;
+				}
+			}
+		}
+	
+		return classFilter;
 	}
 
 	/**
