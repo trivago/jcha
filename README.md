@@ -50,8 +50,10 @@ Shortcut, using a shell alias:
 ```
 
 ## Enhancements done since initial version
- * Correlate class statistics to find common characteristics like "growing about the same amount"
- * Auto-selector, that finds most interesting classes for jcha-gui (a graph with 100 classes does not make much sense)
+ * V1.1
+ ** Correlate class statistics to find common characteristics like "growing about the same amount"
+ ** Auto-selector, that finds most interesting classes for jcha-gui (a graph with 100 classes does not make much sense)
+ 
 ## Possible future enhancements
  * Selecting classes (-C option): Implement pattern-match and also allow path-based class names like java/lang/String
  * Using the classpath of the analysed application, find the culprit class causing a leak.
