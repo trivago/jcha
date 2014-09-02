@@ -12,7 +12,7 @@ public class HistogramAverager
 	/**
 	 * Builds ClassHistogramStats by comparing the first half of the given histograms with the second half.
 	 * <p>
-	 * Implementation: From each half an average Histogram is built. These two histograms are then 
+	 * Implementation: From each half an average Histogram is built. These two histograms are then compared.
 	 * 
 	 * @param histograms
 	 * @param param

@@ -50,8 +50,10 @@ public class App extends Application
 	@Override
 	public void start(Stage stage)
 	{
-		if (param.getLimit() <= 0)
-			param.setLimit(20);
+		if (param.getLimit() <= 0 || param.getLimit() == Integer.MAX_VALUE)
+		{
+			param.setLimit(9);
+		}
 		param.parseArgs(App.args, "jcha-gui", 1); // -<- This is likely not the endorsed way. Can I pick up the args from launch()?
 		List<ClassHistogram> histograms = loadHistograms();
 		int count = histograms.size();
