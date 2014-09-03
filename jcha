@@ -26,5 +26,7 @@ if test -z $JCHA_CP; then
 	JCHA_CP=`dirname "$0"`/target/jcha-1.0-SNAPSHOT-jar-with-dependencies.jar
 fi
 
-java -cp ${JCHA_CP} com/trivago/jcha/apps/JavaClassHistogramAnalyzer $*
+#JCHA_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=8999 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
+
+java -cp ${JCHA_CP} ${JCHA_OPTS} com/trivago/jcha/apps/JavaClassHistogramAnalyzer $*
 

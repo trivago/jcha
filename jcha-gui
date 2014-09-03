@@ -26,8 +26,10 @@ if test -z $JCHA_CP; then
 	JCHA_CP=`dirname "$0"`/target/jcha-1.0-SNAPSHOT-jar-with-dependencies.jar
 fi
 
+#JCHA_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=8999 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
+
 # -- JavaFX is not in the standard runtime path for Java 7 => add it  
 JCHA_CP=${JCHA_CP}:${JAVA_HOME}/jre/lib/jfxrt.jar
 
-java -cp ${JCHA_CP} com.trivago.jcha.apps.App $*
+java -cp ${JCHA_CP} ${JCHA_OPTS} com.trivago.jcha.apps.App $*
 
