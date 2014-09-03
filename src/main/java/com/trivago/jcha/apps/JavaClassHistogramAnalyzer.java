@@ -16,10 +16,19 @@ package com.trivago.jcha.apps;
  * limitations under the License.
  **********************************************************************************/
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+
+import javax.management.MalformedObjectNameException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +37,9 @@ import com.trivago.jcha.core.HistogramAverager;
 import com.trivago.jcha.core.JchaUtil;
 import com.trivago.jcha.core.Parameters;
 import com.trivago.jcha.correlation.BaseCorrelator;
+import com.trivago.jcha.remote.DiagnosticMBean;
 import com.trivago.jcha.stats.ClassHistogram;
+import com.trivago.jcha.stats.ClassHistogramEntry;
 import com.trivago.jcha.stats.ClassHistogramStats;
 import com.trivago.jcha.stats.ClassHistogramStatsEntry;
 
@@ -40,7 +51,11 @@ public class JavaClassHistogramAnalyzer
 	public static void main(String[] args) throws IOException
 	{
 		JavaClassHistogramAnalyzer jcha = new JavaClassHistogramAnalyzer(args);
-		jcha.work();
+		if (jcha.param.getJmxAddress() == null)
+			jcha.work();
+		else
+			jcha.showLive();
+		
 	}
 
 	public JavaClassHistogramAnalyzer(String[] args)
@@ -86,6 +101,56 @@ outer:	for (Entry<String, ArrayList<ClassHistogramStatsEntry>> groupEntry : corr
 		}
 	}
 
+	private void showLive()
+	{
+		DiagnosticMBean mbean = new DiagnosticMBean(param.getJmxAddress());
+		mbean.connect();
+		
+		// Run until the user quits via CTRL-c on the shell
+		int MAX_ERRORS = 10;
+		int errorCount = 0;
+		while (true)
+		{
+			try
+			{
+				String histo = mbean.readHistogram();
+				InputStream is = new ByteArrayInputStream(histo.getBytes(StandardCharsets.UTF_8));
+				ClassHistogram ch = new ClassHistogram(is, param.ignoreKnownDuplicates(), param.classFilter());
+				int line = 0;
+				for(ClassHistogramEntry entry : ch.values())
+				{
+					// 
+					System.out.println(entry);
+					if (line++ == param.getLimit())
+					{
+						break;
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				System.err.println("Reading histogram failed: " + e);
+				errorCount++;
+			}
+			if (errorCount == MAX_ERRORS)
+			{
+				System.err.println("Abort reading histograms, due to many errors: errorCount=" + errorCount);
+				break;
+			}
+			else
+			{
+				try
+				{
+					Thread.sleep(1000*param.getUpdateIntervalSecs());
+				}
+				catch (InterruptedException e)
+				{
+					// ignore
+				}
+			}
+		}
+		
+	}
 
 
 	private List<ClassHistogram> readHistograms()

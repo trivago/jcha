@@ -53,6 +53,9 @@ Shortcut, using a shell alias:
  * V1.1
  ** Correlate class statistics to find common characteristics like "growing about the same amount"
  ** Auto-selector, that finds most interesting classes for jcha-gui (a graph with 100 classes does not make much sense)
+ * V1.2beta
+ ** Live view from running JVM by reading MBean via JMX.
+     jcha --jmx host:port -U interval   
 
 ## Possible future enhancements
  * Selecting classes (-C option): Implement pattern-match and also allow path-based class names like java/lang/String

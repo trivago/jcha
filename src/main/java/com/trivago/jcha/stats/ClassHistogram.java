@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.HashMap;
@@ -57,9 +58,19 @@ public class ClassHistogram
 	 */
 	public ClassHistogram (String file, boolean ignoreKnownDuplicates, Set<String> classFilter) throws IOException
 	{
+		FileInputStream fis = new FileInputStream(new File(file));
+		init(fis, ignoreKnownDuplicates, classFilter);
+	}
+	public ClassHistogram (InputStream is, boolean ignoreKnownDuplicates, Set<String> classFilter) throws IOException
+	{
+		init(is, ignoreKnownDuplicates, classFilter);
+	}
+	
+	public void init(InputStream is, boolean ignoreKnownDuplicates, Set<String> classFilter) throws IOException
+	{
 		ClassHistogram ch = this; // migrated from method to constructor
-		try (FileInputStream fis = new FileInputStream(new File(file));
-				BufferedReader reader = new BufferedReader(new InputStreamReader(fis));)
+		try (
+				BufferedReader reader = new BufferedReader(new InputStreamReader(is));)
 		{
 			boolean useClassFilter = !classFilter.isEmpty();
 			String line;

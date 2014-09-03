@@ -22,6 +22,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.trivago.jcha.apps.Version;
 
 /**
@@ -35,7 +38,8 @@ import com.trivago.jcha.apps.Version;
  */
 public class Parameters
 {
-	
+    static final Logger logger = LogManager.getLogger(Parameters.class);
+
 	private List<String> files = new ArrayList<>();
 	private SortStyle sortStyle = SortStyle.AbsCount;
 	private int limit = Integer.MAX_VALUE;
@@ -45,6 +49,11 @@ public class Parameters
 	private Set<String> classFilter = new HashSet<>();
 	public final static double MaxGroupingPercentageDefault = 0.5;
 	private double maxGroupingPercentage = MaxGroupingPercentageDefault;
+
+	private static final int UpdateIntervalDefault = 10;
+	public static int updateIntervalSecs = UpdateIntervalDefault;
+
+	private String jmxAddress = null;
 
 	enum ParameterMode { Automatic, Histogram, ClassName }
 	
@@ -90,6 +99,14 @@ public class Parameters
 						case "-g":
 							// -g = grouping percentage
 							maxGroupingPercentage = Double.parseDouble(nextArg(++i, args));
+							break;
+						case "--jmx":
+							// --jmx host:port = Show live view from MBean via JMX (Java 8)
+							jmxAddress  = nextArg(++i, args);
+							break;
+						case "-U":
+							// -U = update interval for live view
+							updateIntervalSecs = Integer.parseInt(nextArg(++i, args));
 							break;
 						case "-H":
 						case "--histograms":
@@ -171,6 +188,8 @@ public class Parameters
 		System.out.println("  -n limit       Limit number of shown classes");
 		System.out.println("  -s SortStyle   {" + Arrays.toString(SortStyle.values()) + "} Default=" + sortStyle);
 		System.out.println("  -g percent     For SortStyle AbsCount: Mark classes differing less than given percentage as a group (default: " + MaxGroupingPercentageDefault +"). 0=no grouping." );
+		System.out.println("  --jmx host:port    Show live view from MBean via JMX (Java 8 servers)");
+		System.out.println("  -U interval        Update interval in seconds for live view (default: " + UpdateIntervalDefault + "s)");
 		System.out.println("  -v | -- version    Show version information");
 		System.out.println("  -H | --histograms  All following parameters are treated as histogram file names (*)" );
 		System.out.println("  -C | --classes     All following parameters are treated as fully qualified class names (whitelist) (*)" );
@@ -243,12 +262,31 @@ public class Parameters
 	}
 
 	/**
+	 * @return the updateIntervalSecs
+	 */
+	public static int getUpdateIntervalSecs()
+	{
+		return updateIntervalSecs;
+	}
+
+	/**
 	 * Allows to override the classFilter. Usable when the classFilter is automatically calculated.
 	 * @param classFilter
 	 */
 	public void overrideClassFilter(Set<String> classFilter)
 	{
 		this.classFilter = classFilter;
+	}
+
+	/**
+	 * Returns the address of a JMX enabled MBean server.
+	 * The format is host:port.
+	 *  
+	 * @return
+	 */
+	public String getJmxAddress()
+	{
+		return jmxAddress;
 	}
 
 }
