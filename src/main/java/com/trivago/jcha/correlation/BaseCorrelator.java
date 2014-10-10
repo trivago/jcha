@@ -29,7 +29,7 @@ public abstract class BaseCorrelator implements Correlator<Number>
 	ArrayList<ClassHistogramStatsEntry> currentGroup = null;
 	
 	int similarValueCount = 0;
-	double maxGroupingPercentage;
+	double maxGroupingPercentage = 0;
 	
 	@Override
 	public void addValueSorted(ClassHistogramStatsEntry chse)
@@ -99,7 +99,7 @@ public abstract class BaseCorrelator implements Correlator<Number>
 //		double d2 = d -100;
 //		System.out.println("l=" + lastValue + ", n="+ newValue + " => " + d2);
 		
-		// convert Numver to double, so we can do things like abs() or "<"
+		// convert Number to double, so we can do things like abs() or "<"
 		double lastD = Math.abs(lastValue.doubleValue());
 		double newD  = Math.abs(newValue.doubleValue());
 		lastValue = lastD;
@@ -118,6 +118,13 @@ public abstract class BaseCorrelator implements Correlator<Number>
 	}
 
 
+	/**
+	 * Sets the percentage for building groups. Values will be treated in the
+	 * same group if they do not differ more than the given percentage. The default,
+	 * if this method is not given, is 0% (no difference).
+	 * 
+	 * @param maxGroupingPercentage
+	 */
 	public void setMaxGroupingPercentage(double maxGroupingPercentage)
 	{
 		this.maxGroupingPercentage = maxGroupingPercentage;
