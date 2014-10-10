@@ -34,6 +34,7 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.chart.XYChart.Series;
 import javafx.stage.Stage;
 
+import com.trivago.jcha.core.DataPointType;
 import com.trivago.jcha.core.HistogramAverager;
 import com.trivago.jcha.core.JchaUtil;
 import com.trivago.jcha.correlation.BaseCorrelator;
@@ -52,6 +53,8 @@ public class App extends Application
 	{
 		if (param.getLimit() <= 0 || param.getLimit() == Integer.MAX_VALUE)
 		{
+			// Limit 9 is useful, as more typically obscures the graphs.
+			// Also more than 9 currently make the legend disappear. Possibly have to add (re)sizing code to fix that. 
 			param.setLimit(9);
 		}
 		param.parseArgs(App.args, "jcha-gui", 1); // -<- This is likely not the endorsed way. Can I pick up the args from launch()?
@@ -71,70 +74,91 @@ public class App extends Application
 		}
 		else
 		{
-			
-	        final NumberAxis xAxis = new NumberAxis();
-	        final NumberAxis yAxis = new NumberAxis();
-	        xAxis.setLabel("Time");
-	        yAxis.setLabel("Object count"); // or size
-	        //creating the chart
-	        final LineChart<Number,Number> chart = 
-	                new LineChart<Number,Number>(xAxis,yAxis);
-
-	        String limitText = "";
-	        if (!param.classFilter().isEmpty())
-	        {
-	        	limitText = " (filtering for " + param.classFilter().size() + " classes)";
-	        }
-	        else if (param.getLimit() != 0)
-	        {
-	        	limitText = " (class limit " + param.getLimit() + ")"; 
-	        }
-	        
-	        String orderText = ""; //" orderBy ignored (impl. pending)";
-	        
-			if (count == 1)
-				chart.setTitle("Analyzed 1 histogram" + orderText);
-			else
-				chart.setTitle("Analyzed " + count + " histograms" + limitText + orderText);
-
-			Map<String, XYChart.Series> chartMap = new HashMap<>();
-			
-			int x = 1;
-			for (ClassHistogram histogram : histograms )
-			{
-				int limit = param.getLimit();
-	
-				for (ClassHistogramEntry entry : histogram.values())
-				{
-					if (!param.isClassAcceptable(entry.className))
-					{
-						continue;
-					}
-					XYChart.Series series = resolveSeries(chartMap, entry.className);
-					
-			        //populating the series with data
-			        series.getData().add(new XYChart.Data(x, entry.instances));
-	
-			        if (limit-- == 0)
-			        {
-			        	break; // enough
-			        }
-				}
-				
-				x++; // Advance in x-Axis
-			}
-			
-			ObservableList<Series<Number, Number>> data = chart.getData();
-			for (Series series : chartMap.values())
-			{
-				data.add(series);
-			}
+	        final LineChart<Number, Number> chart = createChart(histograms, count, param.getDataPointType());
 			
 			((Group) scene.getRoot()).getChildren().add(chart);
 		}
 
 		stage.setScene(scene);
 		stage.show();
+	}
+
+	private LineChart<Number, Number> createChart(List<ClassHistogram> histograms, int count, DataPointType dataPointType)
+	{
+		final NumberAxis xAxis = new NumberAxis();
+		final NumberAxis yAxis = new NumberAxis();
+		xAxis.setLabel("Time");
+		yAxis.setLabel("Object count"); // or size
+		//creating the chart
+		final LineChart<Number,Number> chart = 
+		        new LineChart<Number,Number>(xAxis,yAxis);
+
+		String limitText = "";
+		if (!param.classFilter().isEmpty())
+		{
+			limitText = " (filtering for " + param.classFilter().size() + " classes)";
+		}
+		else if (param.getLimit() != 0)
+		{
+			limitText = " (class limit " + param.getLimit() + ")"; 
+		}
+		
+		String orderText = ""; //" orderBy ignored (impl. pending)";
+		
+		if (count == 1)
+			chart.setTitle("Analyzed 1 histogram" + orderText);
+		else
+			chart.setTitle("Analyzed " + count + " histograms" + limitText + orderText);
+
+		Map<String, XYChart.Series> chartMap = new HashMap<>();
+		Map<String, Integer> lastInstances = new HashMap<>();
+		
+		int x = 1;
+		for (ClassHistogram histogram : histograms )
+		{
+			int limit = param.getLimit();
+
+			for (ClassHistogramEntry entry : histogram.values())
+			{
+				if (!param.isClassAcceptable(entry.className))
+				{
+					continue;
+				}
+				XYChart.Series series = resolveSeries(chartMap, entry.className);
+				
+				final int chartValue ;
+				if (dataPointType == DataPointType.FirstDerivation)
+				{
+					Integer lastInstanceCount = lastInstances.get(entry.className);
+					if (lastInstanceCount == null)
+						chartValue = 0;
+					else
+						chartValue = entry.instances - lastInstanceCount; 
+				}
+				else
+				{
+					chartValue = entry.instances;
+				}
+				lastInstances.put(entry.className, entry.instances);
+				
+		        //populating the series with data
+		        series.getData().add(new XYChart.Data(x, chartValue));
+
+		        if (limit-- == 0)
+		        {
+		        	break; // enough
+		        }
+			}
+			
+			x++; // Advance in x-Axis
+		}
+		
+		ObservableList<Series<Number, Number>> data = chart.getData();
+		for (Series series : chartMap.values())
+		{
+			data.add(series);
+		}
+		return chart;
 	}
 
 	/**
@@ -159,7 +183,6 @@ public class App extends Application
 		int pos = 0;
 outer:	for (Entry<String, ArrayList<ClassHistogramStatsEntry>> groupEntry : correlator.getGroups().entrySet())
 		{
-			String key = groupEntry.getKey();
 			ArrayList<ClassHistogramStatsEntry> group = groupEntry.getValue();
 			for (ClassHistogramStatsEntry entry : group)
 			{

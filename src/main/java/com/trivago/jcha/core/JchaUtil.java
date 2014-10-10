@@ -1,6 +1,5 @@
 package com.trivago.jcha.core;
 
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -8,8 +7,6 @@ import com.trivago.jcha.comparator.BaseComparator;
 import com.trivago.jcha.comparator.ComparatorFactory;
 import com.trivago.jcha.correlation.BaseCorrelator;
 import com.trivago.jcha.correlation.CorrelationFactory;
-import com.trivago.jcha.stats.ClassHistogram;
-import com.trivago.jcha.stats.ClassHistogramEntry;
 import com.trivago.jcha.stats.ClassHistogramStats;
 import com.trivago.jcha.stats.ClassHistogramStatsEntry;
 

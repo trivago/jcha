@@ -42,6 +42,7 @@ public class Parameters
 
 	private List<String> files = new ArrayList<>();
 	private SortStyle sortStyle = SortStyle.AbsCount;
+	private DataPointType dataPointType = DataPointType.FirstDerivation; 
 	private int limit = Integer.MAX_VALUE;
 	private boolean showIdentical = false;
 	private boolean ignoreKnownDuplicates = true; // currently always true
@@ -111,6 +112,9 @@ public class Parameters
 						case "-H":
 						case "--histograms":
 							parameterMode = ParameterMode.Histogram;
+							break;
+						case "-A":
+							dataPointType = DataPointType.Absolute;
 							break;
 						case "-C":
 						case "--classes":
@@ -187,7 +191,8 @@ public class Parameters
 		System.out.println("  -i             Show also identical/unchanged classes");
 		System.out.println("  -n limit       Limit number of shown classes");
 		System.out.println("  -s SortStyle   {" + Arrays.toString(SortStyle.values()) + "} Default=" + sortStyle);
-		System.out.println("  -g percent     For SortStyle AbsCount: Mark classes differing less than given percentage as a group (default: " + MaxGroupingPercentageDefault +"). 0=no grouping." );
+		System.out.println("  -A                   Use raw/absoulte values (only supported in jcha-gui)");
+		System.out.println("  -g percent     Mark classes differing less than given percentage (according to SortStyle) as a group (default: " + MaxGroupingPercentageDefault +"). 0=no grouping." );
 		System.out.println("  --jmx host:port    Show live view from MBean via JMX (Java 8 servers)");
 		System.out.println("  -U interval        Update interval in seconds for live view (default: " + UpdateIntervalDefault + "s)");
 		System.out.println("  -v | -- version    Show version information");
@@ -212,6 +217,11 @@ public class Parameters
 	public SortStyle getSortStyle()
 	{
 		return sortStyle;
+	}
+
+	public DataPointType getDataPointType()
+	{
+		return dataPointType;
 	}
 
 	/**
