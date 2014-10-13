@@ -53,18 +53,24 @@ Shortcut, using a shell alias:
  * V1.1
  ** Correlate class statistics to find common characteristics like "growing about the same amount"
  ** Auto-selector, that finds most interesting classes for jcha-gui (a graph with 100 classes does not make much sense)
+ ** Selecting classes (-C option): Implement pattern-match and also allow path-based class names like java/lang/String
  * V1.2beta
  ** Live view from running JVM by reading MBean via JMX.
      jcha --jmx host:port -U interval   
+ ** Show the first derivation of the data points in the graph.
 
 ## Possible future enhancements
- * Selecting classes (-C option): Implement pattern-match and also allow path-based class names like java/lang/String
  * Using the classpath of the analysed application, find the culprit class causing a leak.
  * Optionally use timestamps instead of numbers as x-Axis. Either from file inode (-t [ctime|utime|atime|time])
    or filename pattern (-t name regexp)
+ * Allow to specifiy time range
+ * Interpolate data over time to get a uniform graph
+ * Identify service restarts, to display it on the graph and for calculations (measure from time t1 until serive restart)
 
 ## Known bugs
- * Class name caption is missing in jcha-gui when showing 10 classes or more. 
+ * In all versions
+ ** Class name caption is missing in jcha-gui when showing 10 classes or more. 
+ ** The window of jcha-gui does not follow resizes
 
 ## License
 Apache License 2.0
