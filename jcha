@@ -28,5 +28,5 @@ fi
 
 #JCHA_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=8999 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
 
-java -cp ${JCHA_CP} ${JCHA_OPTS} com/trivago/jcha/apps/JavaClassHistogramAnalyzer $*
+java -cp ${JCHA_CP} ${JCHA_OPTS} com/trivago/jcha/apps/JavaClassHistogramAnalyzer ${1+"$@"}
 

@@ -31,5 +31,5 @@ fi
 # -- JavaFX is not in the standard runtime path for Java 7 => add it  
 JCHA_CP=${JCHA_CP}:${JAVA_HOME}/jre/lib/jfxrt.jar
 
-java -cp ${JCHA_CP} ${JCHA_OPTS} com.trivago.jcha.apps.App $*
+java -cp ${JCHA_CP} ${JCHA_OPTS} com.trivago.jcha.apps.App ${1+"$@"}
 
