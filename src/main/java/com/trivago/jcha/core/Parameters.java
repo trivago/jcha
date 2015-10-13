@@ -72,7 +72,6 @@ public class Parameters
 	public void parseArgs(String[] args, String executableName, int requiredHistograms)
 	{
 		ParameterMode parameterMode = ParameterMode.Automatic;
-		System.out.println("a=" + args);
 		
 		for (int i=0; i<args.length; i++)
 		{
