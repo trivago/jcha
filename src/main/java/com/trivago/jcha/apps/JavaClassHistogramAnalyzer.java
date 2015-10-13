@@ -17,9 +17,13 @@ package com.trivago.jcha.apps;
  **********************************************************************************/
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -30,6 +34,7 @@ import java.util.TreeSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.trivago.jcha.core.CaptureStyle;
 import com.trivago.jcha.core.HistogramAverager;
 import com.trivago.jcha.core.JchaUtil;
 import com.trivago.jcha.core.Parameters;
@@ -128,32 +133,59 @@ outer:	for (Entry<String, ArrayList<ClassHistogramStatsEntry>> groupEntry : corr
 	{
 		DiagnosticMBean mbean = new DiagnosticMBean(param.getJmxAddress());
 		mbean.connect();
-		
+
 		// Run until the user quits via CTRL-c on the shell
 		int MAX_ERRORS = 10;
 		int errorCount = 0;
 		while (true)
 		{
+			CaptureStyle captureStyle = null;
 			try
 			{
 				String histo = mbean.readHistogram();
 				InputStream is = new ByteArrayInputStream(histo.getBytes(StandardCharsets.UTF_8));
-				ClassHistogram ch = new ClassHistogram(is, param.ignoreKnownDuplicates(), param.classFilter());
-				ch.setSnapshotTimeMillis(System.currentTimeMillis());
-				int line = 0;
-				for(ClassHistogramEntry entry : ch.values())
+				captureStyle = param.getCaptureStyle();
+				switch (captureStyle)
 				{
-					// 
-					System.out.println(entry);
-					if (line++ == param.getLimit())
-					{
+					case Cooked:
+						ClassHistogram ch = new ClassHistogram(is, param.ignoreKnownDuplicates(), param.classFilter());
+						ch.setSnapshotTimeMillis(System.currentTimeMillis());
+						int line = 0;
+						for (ClassHistogramEntry entry : ch.values())
+						{
+							//
+							System.out.println(entry);
+							if (line++ == param.getLimit())
+							{
+								break;
+							}
+						}
 						break;
-					}
-				}
+
+					case Raw:
+						// Note: Raw does not support param.getLimit()), as it makes only much sense when it operates on sorted (cooked) data.
+						SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+						String outfileName = param.getJmxAddress() + "." + sdf.format(new Date()) + ".jcha";
+						File outfile = new File(outfileName);
+						OutputStream os = new FileOutputStream(outfile);
+					    byte[] buffer = new byte[1024];
+					    int bytesRead;
+					    while ((bytesRead = is.read(buffer)) != -1)
+					    {
+					        os.write(buffer, 0, bytesRead);
+					    }
+					    os.close();
+					    is.close();
+					    break;
+					    
+					default:
+						throw new IllegalArgumentException("Unsupported CaptureStyle=" + captureStyle);
+
+				} // switch
 			}
 			catch (Exception e)
 			{
-				System.err.println("Reading histogram failed: " + e);
+				System.err.println("Reading histogram failed. Output format= " + captureStyle + ": " + e);
 				errorCount++;
 			}
 			if (errorCount == MAX_ERRORS)
@@ -165,7 +197,7 @@ outer:	for (Entry<String, ArrayList<ClassHistogramStatsEntry>> groupEntry : corr
 			{
 				try
 				{
-					Thread.sleep(1000*param.getUpdateIntervalSecs());
+					Thread.sleep(1000 * param.getUpdateIntervalSecs());
 				}
 				catch (InterruptedException e)
 				{
@@ -173,9 +205,8 @@ outer:	for (Entry<String, ArrayList<ClassHistogramStatsEntry>> groupEntry : corr
 				}
 			}
 		}
-		
-	}
 
+	}
 
 	private SortedSet<ClassHistogram> readHistograms()
 	{

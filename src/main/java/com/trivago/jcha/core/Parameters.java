@@ -56,6 +56,8 @@ public class Parameters
 
 	private String jmxAddress = null;
 
+	private CaptureStyle captureStyle = CaptureStyle.Raw;
+
 	enum ParameterMode { Automatic, Histogram, ClassName }
 	
 	/**
@@ -104,6 +106,10 @@ public class Parameters
 							// --jmx host:port = Show live view from MBean via JMX (Java 8)
 							jmxAddress  = nextArg(++i, args);
 							break;
+						case "-F":
+							// -F = format
+							captureStyle = CaptureStyle.valueOf(nextArg(++i, args));
+							break;							
 						case "-U":
 							// -U = update interval for live view
 							updateIntervalSecs = Integer.parseInt(nextArg(++i, args));
@@ -187,12 +193,13 @@ public class Parameters
 	private void usage(Integer exitCode, String executableName)
 	{
 		System.out.println("Usage: " + executableName + " [-s SortStyle] [-n limit] [-i] file1 file2 [file3 ...] [-C class1 ...]");
-		System.out.println("  -i             Show also identical/unchanged classes");
-		System.out.println("  -n limit       Limit number of shown classes");
+		System.out.println("  -i                 Show also identical/unchanged classes");
+		System.out.println("  -n limit           Limit number of shown classes");
 		System.out.println("  -s SortStyle   {" + Arrays.toString(SortStyle.values()) + "} Default=" + sortStyle);
-		System.out.println("  -A                   Use raw/absoulte values (only supported in jcha-gui)");
-		System.out.println("  -g percent     Mark classes differing less than given percentage (according to SortStyle) as a group (default: " + MaxGroupingPercentageDefault +"). 0=no grouping." );
+		System.out.println("  -A                 Use raw/absoulte values (only supported in jcha-gui)");
+		System.out.println("  -g percent         Mark classes differing less than given percentage (according to SortStyle) as a group (default: " + MaxGroupingPercentageDefault +"). 0=no grouping." );
 		System.out.println("  --jmx host:port    Show live view from MBean via JMX (Java 8 servers)");
+		System.out.println("  -F format          Output format for capture { " + Arrays.toString(CaptureStyle.values()) + "} Default=" + getCaptureStyle() );
 		System.out.println("  -U interval        Update interval in seconds for live view (default: " + UpdateIntervalDefault + "s)");
 		System.out.println("  -v | -- version    Show version information");
 		System.out.println("  -H | --histograms  All following parameters are treated as histogram file names (*)" );
@@ -296,6 +303,11 @@ public class Parameters
 	public String getJmxAddress()
 	{
 		return jmxAddress;
+	}
+
+	public CaptureStyle getCaptureStyle()
+	{
+		return captureStyle;
 	}
 
 }
