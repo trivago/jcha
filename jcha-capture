@@ -48,7 +48,7 @@ fi
 
 echo "Start capturing pid=${thepid} on ${filePrefix}.<datetime>.jch, delay=${delaySecs}s, count=${rounds}"
 if test "x$count" = "xinfinite"; then
-   echo "Running infitibly long. Press CTRL-c to stop"
+   echo "Running infinitely long. Press CTRL-c to stop"
 fi
 
 while test $rounds != 0; do
