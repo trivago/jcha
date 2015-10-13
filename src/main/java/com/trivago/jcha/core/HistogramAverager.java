@@ -1,6 +1,8 @@
 package com.trivago.jcha.core;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedSet;
 
 import com.trivago.jcha.stats.ClassHistogram;
 import com.trivago.jcha.stats.ClassHistogramEntry;
@@ -18,12 +20,13 @@ public class HistogramAverager
 	 * @param param
 	 * @return
 	 */
-	public static ClassHistogramStats compareFirstWithSecondHalf(List<ClassHistogram> histograms, Parameters param)
+	public static ClassHistogramStats compareFirstWithSecondHalf(SortedSet<ClassHistogram> histograms, Parameters param)
 	{
 		ClassHistogramStats statsFiltered;
 		final ClassHistogram ch1;
 		final ClassHistogram ch2;
-		int histCount = histograms.size();
+		List<ClassHistogram> histogramsAsList = new ArrayList<>(histograms); 
+		int histCount = histogramsAsList.size();
 		if (histCount < 2)
 		{
 			System.err.println("Error: Less than 2 histogram files could be parsed. Please check file types and permissions. Cannot continue.");
@@ -33,17 +36,23 @@ public class HistogramAverager
 		else if (histCount == 2)
 		{
 			// Trivial case
-			ch1 = histograms.get(0);
-			ch2 = histograms.get(histograms.size()-1);
+			ch1 = histogramsAsList.get(0);
+			ch2 = histogramsAsList.get(histogramsAsList.size()-1);
 		}
 		else
 		{
 			// Less trivial case: Run average on first half and second half
 			int midOfArraySkip = histCount %2 == 0 ? 1 : 0; // even number of histograms => skip "mid" in first half 
 			int midOfArray = Math.round(histCount/2.0f) - 1; // 3 => 1  ; 4 => 2 ; 5 => 2
-			ch1 = buildAverageHistogram(histograms, 0 , midOfArray-midOfArraySkip);
-			ch2 = buildAverageHistogram(histograms, midOfArray, histCount-1);
+			ch1 = buildAverageHistogram(histogramsAsList, 0 , midOfArray-midOfArraySkip);
+			ch2 = buildAverageHistogram(histogramsAsList, midOfArray, histCount-1);
 		}
+		
+		// Set start and end time of newly created histograms from the actual first and last
+		ClassHistogram firstHistogram = histogramsAsList.get(0);
+		ClassHistogram lastHistogram = histogramsAsList.get(histogramsAsList.size()-1);
+		ch1.setSnapshotTimeMillis(firstHistogram.getSnapshotTimeMillisFrom());
+		ch2.setSnapshotTimeMillis(lastHistogram.getSnapshotTimeMillisFrom());
 		
 		ClassHistogramStats stats = calculateDiff(ch1, ch2);
 		statsFiltered = stats.ignoreHarmless(param.showIdentical() , 0,0);
@@ -128,7 +137,10 @@ public class HistogramAverager
 				stats.stats.put(key, chse);
 			}
 		}
-			
+		
+		stats.setSnapshotTimeMillisFrom(ch1.getSnapshotTimeMillisFrom());
+		stats.setSnapshotTimeMillisTo(ch2.getSnapshotTimeMillisTo());
+		
 		return stats;
 	}
 

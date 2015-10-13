@@ -17,12 +17,15 @@ package com.trivago.jcha.apps;
  **********************************************************************************/
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javafx.application.Application;
 import javafx.collections.ObservableList;
@@ -58,7 +61,7 @@ public class App extends Application
 			param.setLimit(9);
 		}
 		param.parseArgs(App.args, "jcha-gui", 1); // -<- This is likely not the endorsed way. Can I pick up the args from launch()?
-		List<ClassHistogram> histograms = loadHistograms();
+		SortedSet<ClassHistogram> histograms = loadHistograms();
 		int count = histograms.size();
 		
 		param.overrideClassFilter(calculateClassFilter(histograms));
@@ -83,7 +86,7 @@ public class App extends Application
 		stage.show();
 	}
 
-	private LineChart<Number, Number> createChart(List<ClassHistogram> histograms, int count, DataPointType dataPointType)
+	private LineChart<Number, Number> createChart(Collection<ClassHistogram> histograms, int count, DataPointType dataPointType)
 	{
 		final NumberAxis xAxis = new NumberAxis();
 		final NumberAxis yAxis = new NumberAxis();
@@ -171,7 +174,7 @@ public class App extends Application
 	 * @param limit
 	 * @return
 	 */
-	private Set<String> calculateClassFilter(List<ClassHistogram> histograms)
+	private Set<String> calculateClassFilter(SortedSet<ClassHistogram> histograms)
 	{
 		if (!param.classFilter().isEmpty())
 			return param.classFilter();
@@ -219,11 +222,11 @@ outer:	for (Entry<String, ArrayList<ClassHistogramStatsEntry>> groupEntry : corr
 		return series2;
 	}
 
-	List<ClassHistogram> loadHistograms()
+	SortedSet<ClassHistogram> loadHistograms()
 	{
 		List<String> files = param.getFiles();
 		int histCountFiles = files.size();
-		List<ClassHistogram> histograms = new ArrayList<>(histCountFiles);
+		SortedSet<ClassHistogram> histograms = new TreeSet<>();
 		for (int i=0; i< histCountFiles; i++)
 		{
 			try

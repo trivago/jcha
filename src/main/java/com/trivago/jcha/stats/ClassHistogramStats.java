@@ -25,7 +25,10 @@ public class ClassHistogramStats
 {
 	// key is className
 	public final Map<String, ClassHistogramStatsEntry> stats = new HashMap<>();
+	private Long snapshotTimeMillisFrom = null;
+	private Long snapshotTimeMillisTo = null;
 
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
@@ -58,6 +61,9 @@ public class ClassHistogramStats
 			throw new IllegalArgumentException("minByteDiff must be >=0"); 
 
 		ClassHistogramStats newStats = new ClassHistogramStats();
+		newStats.snapshotTimeMillisFrom = snapshotTimeMillisFrom;
+		newStats.snapshotTimeMillisTo = snapshotTimeMillisTo;
+		
 		for (Entry<String, ClassHistogramStatsEntry> entry : stats.entrySet())
 		{
 			String key = entry.getKey();
@@ -87,4 +93,25 @@ public class ClassHistogramStats
 		}
 		return newStats;
 	}	
+	
+	
+	public Long getSnapshotTimeMillisFrom()
+	{
+		return snapshotTimeMillisFrom;
+	}
+
+	public void setSnapshotTimeMillisFrom(Long snapshotTimeMillis)
+	{
+		this.snapshotTimeMillisFrom = snapshotTimeMillis;
+	}
+
+	public Long getSnapshotTimeMillisTo()
+	{
+		return snapshotTimeMillisTo;
+	}
+
+	public void setSnapshotTimeMillisTo(Long snapshotTimeMillis)
+	{
+		this.snapshotTimeMillisTo = snapshotTimeMillis;
+	}
 }

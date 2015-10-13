@@ -16,19 +16,16 @@ package com.trivago.jcha.apps;
  * limitations under the License.
  **********************************************************************************/
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
-
-import javax.management.MalformedObjectNameException;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -72,7 +69,7 @@ public class JavaClassHistogramAnalyzer
 	private void work() throws IOException
 	{
 		// -1- Read histograms -------------------------------------------------
-		List<ClassHistogram> histograms = readHistograms();
+		SortedSet<ClassHistogram> histograms = readHistograms();
 
 		// -2- Calculate average of first and second half -------------------------------------------------
 		ClassHistogramStats statsFiltered = HistogramAverager.compareFirstWithSecondHalf(histograms, param);
@@ -83,20 +80,46 @@ public class JavaClassHistogramAnalyzer
 		
 		// -4- Print histograms ----------------------------------------------
 		int pos = 0;
+		// -4a- Header
+		Long fromMillis = statsFiltered.getSnapshotTimeMillisFrom();
+		Long toMillis = statsFiltered.getSnapshotTimeMillisTo();
+		if (fromMillis !=null && toMillis != null)
+		{
+			System.out.println("Time-range: " + new Date(fromMillis) + " - " + new Date(toMillis));
+		}
+		else
+		{
+			System.out.println("Time-range: " + fromMillis + " - " + toMillis);			
+		}
 		System.out.println(correlator.getGroups().size() + " groups were detected, for simalarity " + param.getMaxGroupingPercentage() + "%");
 
+		// -4b- Rows
 outer:	for (Entry<String, ArrayList<ClassHistogramStatsEntry>> groupEntry : correlator.getGroups().entrySet())
 		{
-			String key = groupEntry.getKey();
+//			String key = groupEntry.getKey();
 			ArrayList<ClassHistogramStatsEntry> group = groupEntry.getValue();
-			System.out.println("--- Group start --------------------------------------------------------");
+			boolean showGroupHeaders = group.size() > 1; 
+			if (showGroupHeaders)
+			{
+				System.out.println("--- Group start --------------------------------------------------------");
+			}
 			for (ClassHistogramStatsEntry entry : group)
 			{
+				if (showGroupHeaders)
+					System.out.print("> "); // group marker
+				else
+					System.out.print("  "); // no group
+				
 				System.out.println(entry);
+				
 				if (pos++ == param.getLimit())
 				{
 					break outer;
 				}
+			}
+			if (showGroupHeaders)
+			{
+				System.out.println("--- Group end ----------------------------------------------------------");
 			}
 		}
 	}
@@ -116,6 +139,7 @@ outer:	for (Entry<String, ArrayList<ClassHistogramStatsEntry>> groupEntry : corr
 				String histo = mbean.readHistogram();
 				InputStream is = new ByteArrayInputStream(histo.getBytes(StandardCharsets.UTF_8));
 				ClassHistogram ch = new ClassHistogram(is, param.ignoreKnownDuplicates(), param.classFilter());
+				ch.setSnapshotTimeMillis(System.currentTimeMillis());
 				int line = 0;
 				for(ClassHistogramEntry entry : ch.values())
 				{
@@ -153,16 +177,18 @@ outer:	for (Entry<String, ArrayList<ClassHistogramStatsEntry>> groupEntry : corr
 	}
 
 
-	private List<ClassHistogram> readHistograms()
+	private SortedSet<ClassHistogram> readHistograms()
 	{
 		List<String> files = param.getFiles();
 		int histCountFiles = files.size();
-		List<ClassHistogram> histograms = new ArrayList<>(histCountFiles);
+		SortedSet<ClassHistogram> histograms = new TreeSet<>();
 		for (int i=0; i< histCountFiles; i++)
 		{
 			try
 			{
-				histograms.add(new ClassHistogram(files.get(i), param.ignoreKnownDuplicates(), param.classFilter()));
+				String fileName = files.get(i);
+				ClassHistogram ch = new ClassHistogram(fileName, param.ignoreKnownDuplicates(), param.classFilter());
+				histograms.add(ch);
 			}
 			catch (Exception exc)
 			{
@@ -210,7 +236,7 @@ outer:	for (Entry<String, ArrayList<ClassHistogramStatsEntry>> groupEntry : corr
 
 	private void warn(String message)
 	{
-		logger.warn(message);
+		logger.error(message); // temporarily move to error status
 	}
 
 

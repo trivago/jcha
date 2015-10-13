@@ -26,31 +26,39 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
- * ClassHistograam. Currently this is not much more than a wrapper around a Map.
+ * ClassHistogram. Currently this is not much more than a wrapper around a Map.
+ * It implements a natural ordering based on the {@link #snapshotTimeMillis} timestamp. See {@link #compareTo(ClassHistogram)}
+ * for details.
+ * 
  * @author cesken
  *
  */
-public class ClassHistogram
+public class ClassHistogram implements Comparable<ClassHistogram>
 {
 	private static final boolean DEBUGPARSER = false;
-
+	private static AtomicInteger IndexCounter = new AtomicInteger();
+	
 	// key is class name (as String)
 	private Map<String, ClassHistogramEntry> id2entry = new HashMap<>();
 	private String description;
+	private final int index;
+	private Long snapshotTimeMillisFrom = null;
+	private Long snapshotTimeMillisTo = null;
 
 	/**
 	 * Creates an empty histogram.
 	 */
 	public ClassHistogram ()
 	{
-		
+		index = IndexCounter.incrementAndGet();
 	}
 
 	/**
-	 * Parses a class histogram file (written by jcmd), and constructs a class histogram instance from it.
+	 * Parses a class histogram file (written by jcmd) from a file, and constructs a class histogram instance from it.
 	 * 
 	 * @param file
 	 * @param classFilter 
@@ -58,11 +66,22 @@ public class ClassHistogram
 	 */
 	public ClassHistogram (String file, boolean ignoreKnownDuplicates, Set<String> classFilter) throws IOException
 	{
+		index = IndexCounter.incrementAndGet();
+		setSnapshotTimeMillis(getTimestampFromFile(file));
 		FileInputStream fis = new FileInputStream(new File(file));
 		init(fis, ignoreKnownDuplicates, classFilter);
 	}
+	
+	/**
+	 * Parses a class histogram file (written by jcmd) from an InputStream, and constructs a class histogram instance from it.
+	 * 
+	 * @param file
+	 * @param classFilter 
+	 * @throws IOException
+	 */
 	public ClassHistogram (InputStream is, boolean ignoreKnownDuplicates, Set<String> classFilter) throws IOException
 	{
+		index = IndexCounter.incrementAndGet();
 		init(is, ignoreKnownDuplicates, classFilter);
 	}
 	
@@ -97,6 +116,7 @@ public class ClassHistogram
 				boolean knownDuplicate = "[[I".equals(className);
 				knownDuplicate = knownDuplicate | "GregorSamsa".equals(className); // might need fully-qualified class name here
 				
+				// possibly warn
 				if (ch.containsKey(className))
 				{
 					if (!knownDuplicate)
@@ -104,6 +124,8 @@ public class ClassHistogram
 						System.err.println("Warning: Duplicated entry:  old: " + ch.get(className) + " | new: " + che);
 					}
 				}
+				
+				// Add or skip
 				if (knownDuplicate && ignoreKnownDuplicates)
 				{
 					// skip
@@ -126,6 +148,48 @@ public class ClassHistogram
 	public void setDescription(String description)
 	{
 		this.description = description;
+	}
+
+	/**
+	 * Sets both from and to
+	 * @param snapshotTimeMillis
+	 */
+	public void setSnapshotTimeMillis(Long snapshotTimeMillis)
+	{
+		this.snapshotTimeMillisFrom = snapshotTimeMillis;
+		this.snapshotTimeMillisTo = snapshotTimeMillis;
+	}
+
+	
+	public Long getSnapshotTimeMillisFrom()
+	{
+		return snapshotTimeMillisFrom;
+	}
+
+	public void setSnapshotTimeMillisFrom(Long snapshotTimeMillis)
+	{
+		this.snapshotTimeMillisFrom = snapshotTimeMillis;
+	}
+
+	public Long getSnapshotTimeMillisTo()
+	{
+		return snapshotTimeMillisTo;
+	}
+
+	public void setSnapshotTimeMillisTo(Long snapshotTimeMillis)
+	{
+		this.snapshotTimeMillisTo = snapshotTimeMillis;
+	}
+
+	/**
+	 * Returns an unique number for this ClassHistogram entry. Instances created latere have a higher
+	 * number (a.k.a. auto-increment).
+	 *  
+	 * @return
+	 */
+	public int getIndex()
+	{
+		return index;
 	}
 
 	@Override
@@ -172,6 +236,46 @@ public class ClassHistogram
 		{
 			System.err.println(string);
 		}
+	}
+
+	/**
+	 * Returns a timestamp from the given file. If possible, the creation timestamp will be returned.
+	 *  
+	 * @param fileName
+	 * @return The timestamp in millis since Epoch, or null if timestamp cnnot be determined 
+	 */
+	private Long getTimestampFromFile(String fileName)
+	{
+		File f = new File(fileName);
+		 long lastModified = f.lastModified();
+		 // 0 is either file not found, or cannot read, or ...
+		 
+		 return (lastModified == 0) ? null : lastModified;
+		 // TODO Move to Files.readAttributes(), as it is more flexible (creation timestamp), and more exact in error handling
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		return (this == obj);
+	}
+
+	/**
+	 * Order by {@link #snapshotTimeMillisFrom}. Fallback: If at least one of the compared timestamps is null,
+	 * the comparison is done using {@link #index}.
+	 */
+	@Override
+	public int compareTo(ClassHistogram o)
+	{
+		boolean timestampsOK =o.getSnapshotTimeMillisFrom() != null && getSnapshotTimeMillisFrom() != null;
+		if (timestampsOK)
+		{
+			int timestampDiff = Long.signum(o.getSnapshotTimeMillisFrom() - getSnapshotTimeMillisFrom());
+			if (timestampDiff != 0)
+				return timestampDiff;
+		}
+		
+		return o.getIndex() - getIndex();
 	}
 
 }
