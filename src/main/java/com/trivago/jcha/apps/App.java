@@ -16,6 +16,9 @@ package com.trivago.jcha.apps;
  * limitations under the License.
  **********************************************************************************/
 
+import java.sql.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -25,6 +28,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TimeZone;
 import java.util.TreeSet;
 
 import javafx.application.Application;
@@ -36,6 +40,8 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.chart.XYChart.Series;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
+import javafx.util.converter.TimeStringConverter;
 
 import com.trivago.jcha.core.DataPointType;
 import com.trivago.jcha.core.HistogramAverager;
@@ -86,12 +92,65 @@ public class App extends Application
 		stage.show();
 	}
 
+
+
+	class TimestampToStringConverter extends StringConverter<Number>
+	{
+		final TimeStringConverter tsc;
+
+		/**
+		 * Creates a converter, that uses the default timezone to convert the timestamp into a String.
+		 */
+		TimestampToStringConverter()
+		{
+			this(TimeZone.getDefault());
+		}
+
+		/**
+		 * Creates a converter, that uses the given timezone to convert the timestamp into a String.
+		 */
+		TimestampToStringConverter(TimeZone tz)
+		{
+			DateFormat df = new SimpleDateFormat("HH:mm:ss.SSS");
+			df.setTimeZone(tz);
+			tsc = new TimeStringConverter(df);
+		}
+		
+		@Override
+		public String toString(Number t)
+		{
+			return tsc.toString(new Date(t.longValue()));
+		}
+
+		@Override
+		public Number fromString(String string)
+		{
+			return 1;
+		}
+
+	}
+
 	private LineChart<Number, Number> createChart(Collection<ClassHistogram> histograms, int count, DataPointType dataPointType)
 	{
+		boolean useDateAxis = false;
+		boolean useSizeYAxis = true;
+
 		final NumberAxis xAxis = new NumberAxis();
 		final NumberAxis yAxis = new NumberAxis();
 		xAxis.setLabel("Time");
-		yAxis.setLabel("Object count"); // or size
+		if (useDateAxis)
+		{
+			xAxis.setTickLabelFormatter(new TimestampToStringConverter());
+		}
+
+		if (useSizeYAxis)
+		{
+			yAxis.setLabel("Object size"); // or size
+		}
+		else
+		{
+			yAxis.setLabel("Object count"); // or size			
+		}
 		//creating the chart
 		final LineChart<Number,Number> chart = 
 		        new LineChart<Number,Number>(xAxis,yAxis);
@@ -113,8 +172,8 @@ public class App extends Application
 		else
 			chart.setTitle("Analyzed " + count + " histograms" + limitText + orderText);
 
-		Map<String, XYChart.Series> chartMap = new HashMap<>();
-		Map<String, Integer> lastInstances = new HashMap<>();
+		Map<String, XYChart.Series<Number,Number>> chartMap = new HashMap<>();
+		Map<String, Long> lastInstances = new HashMap<>();
 		
 		int x = 1;
 		for (ClassHistogram histogram : histograms )
@@ -127,25 +186,40 @@ public class App extends Application
 				{
 					continue;
 				}
-				XYChart.Series series = resolveSeries(chartMap, entry.className);
+				XYChart.Series<Number,Number> series = resolveSeries(chartMap, entry.className);
 				
-				final int chartValue ;
+				final long chartValue ;
+				long value = useSizeYAxis ? entry.bytes : entry.instances;
+				
 				if (dataPointType == DataPointType.FirstDerivation)
 				{
-					Integer lastInstanceCount = lastInstances.get(entry.className);
+					Long lastInstanceCount = lastInstances.get(entry.className);
 					if (lastInstanceCount == null)
 						chartValue = 0;
 					else
-						chartValue = entry.instances - lastInstanceCount; 
+						chartValue = value - lastInstanceCount; 
 				}
 				else
 				{
-					chartValue = entry.instances;
+					chartValue = value;
 				}
-				lastInstances.put(entry.className, entry.instances);
+				
+				long xValue;
+				if (useDateAxis)
+				{
+					xValue = histogram.getSnapshotTimeMillisTo();
+//					if (xValue < 1344813629000L)
+//						continue;
+				}
+				else
+				{
+					xValue = x;
+				}
+				
+				lastInstances.put(entry.className, value);
 				
 		        //populating the series with data
-		        series.getData().add(new XYChart.Data(x, chartValue));
+		        series.getData().add(new XYChart.Data<Number,Number>(xValue, chartValue));
 
 		        if (limit-- == 0)
 		        {
@@ -157,10 +231,11 @@ public class App extends Application
 		}
 		
 		ObservableList<Series<Number, Number>> data = chart.getData();
-		for (Series series : chartMap.values())
+		for (Series<Number,Number> series : chartMap.values())
 		{
 			data.add(series);
 		}
+//		data.addListener(arg0);
 		return chart;
 	}
 
@@ -207,15 +282,15 @@ outer:	for (Entry<String, ArrayList<ClassHistogramStatsEntry>> groupEntry : corr
 	 * @param className
 	 * @return
 	 */
-	private Series resolveSeries(Map<String, Series> chartMap, String className)
+	private Series<Number,Number> resolveSeries(Map<String, Series<Number,Number>> chartMap, String className)
 	{
-		Series series2 = chartMap.get(className);
+		Series<Number,Number> series2 = chartMap.get(className);
 		if (series2 != null)
 		{
 			return series2; // Already exists. Fine. Use it
 		}
 
-		series2 = new XYChart.Series();
+		series2 = new XYChart.Series<Number,Number>();
         series2.setName(className);
         chartMap.put(className, series2);
 
