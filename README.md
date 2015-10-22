@@ -15,26 +15,19 @@ Both tools support class filtering, by either giving a limit or a class list.
 
 
 ## Building
-Build requires Maven and Java 8 (or Java 7, see below). All other dependencies are pulled in by Maven.
+Build requires Maven and Java 8. All other dependencies are pulled in by Maven.
 ```
   mvn package assembly:single
 ```
 
-### Building with Oracle JDK 7
-Requires adding JavaFX to pom.xml. For this you need to uncomment the corresponding
-section containing the jfxrt dependency. See http://zenjava.com/javafx/maven/fix-classpath.html
-why this workaround is necessary.
-
-### Building and running with OpenJDK7
-OpenJDK7 does not always ship with JavaFX included. Not recommended, use OpenJDK8 instead. If you
-really must, then the minimum is to copy a jfxrt.jar to JDK_HOME/jre/lib/ext/ .
 
 ## Running
 You can run jcha directly from the build directory. It requires Java 7 or above.
 jcha-gui requires JavaFX to be in the classpath. All Java 8 and some Java 7 installations fulfill this dependency.
 ```
- jcha-capture 100 10 pid filnamePrefix               # Capture 100 histograms, delay between is 10 seconds
  jcmd pid GC.class_histogram > classhistogram01.jch  # Capture a single histogram, directly with jcmd from JDK
+ jcha --jmx host:port                                # Capture endlessly from a JMX enabled JVM (Java 8 server)
+ jcha-capture 100 10 pid filnamePrefix               # Capture 100 histograms, delay between is 10 seconds
 
  jcha classhistogram01.jch classhistogram02.jch      # Start jcha with 2 *.jch files in the directory
  jcha -h                                             # for showing help on all options like sorting
@@ -58,7 +51,12 @@ Shortcut, using a shell alias:
  ** Live view from running JVM by reading MBean via JMX.
      jcha --jmx host:port -U interval   
  ** Show the first derivation of the data points in the graph.
-
+ * V1.3
+ ** Capture live via JMX also in Raw format, immediately readable by jcha and jcha-gui 
+ ** Quiet mode -q
+ ** Initial support for a time axis in jcha-gui
+ **
+  
 ## Possible future enhancements
  * Using the classpath of the analysed application, find the culprit class causing a leak.
  * Optionally use timestamps instead of numbers as x-Axis. Either from file inode (-t [ctime|utime|atime|time])

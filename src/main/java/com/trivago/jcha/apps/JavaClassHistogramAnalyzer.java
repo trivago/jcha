@@ -176,6 +176,10 @@ outer:	for (Entry<String, ArrayList<ClassHistogramStatsEntry>> groupEntry : corr
 					    }
 					    os.close();
 					    is.close();
+					    if (! param.quietMode())
+					    {
+					    	System.out.print('.');
+					    }
 					    break;
 					    
 					default:

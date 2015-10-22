@@ -25,8 +25,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.trivago.jcha.apps.Version;
-
 /**
  * Parameters for the jcha applications. The values all have a sensible default value.
  * The defaults can be overriden by the user by command line parameters, see {@link #parseArgs(String[], int)}.
@@ -107,6 +105,8 @@ public class Parameters
 						case "--jmx":
 							// --jmx host:port = Show live view from MBean via JMX (Java 8)
 							jmxAddress  = nextArg(++i, args);
+							// If we capture live via JMX, we do not need any histograms upfront
+							requiredHistograms = 0;
 							break;
 						case "-F":
 							// -F = format
@@ -127,6 +127,10 @@ public class Parameters
 						case "--classes":
 							parameterMode = ParameterMode.ClassName;
 							break;
+						case "-q":
+							// -q = quiet mode
+							quietMode = true;
+							break;
 						case "-h":
 						case "--help":
 							// -h = help
@@ -135,7 +139,12 @@ public class Parameters
 						case "-v":
 						case "--version":
 							// -v = version
-							System.out.println(executableName + " " + Version.versionString());
+							String ver;
+							if (executableName.equals("jcha-gui"))
+								ver = Version.JCHAGUI.versionString();
+							else
+								ver = Version.JCHA.versionString();
+							System.out.println(executableName + " " + ver);
 							System.exit(0);
 							
 						default:
@@ -194,6 +203,7 @@ public class Parameters
 
 	private void usage(Integer exitCode, String executableName)
 	{
+		System.out.println(executableName + " " + Version.JCHA.versionString());
 		System.out.println("Usage: " + executableName + " [-s SortStyle] [-n limit] [-i] file1 file2 [file3 ...] [-C class1 ...]");
 		System.out.println("  -i                 Show also identical/unchanged classes");
 		System.out.println("  -n limit           Limit number of shown classes");
@@ -203,6 +213,7 @@ public class Parameters
 		System.out.println("  --jmx host:port    Show live view from MBean via JMX (Java 8 servers)");
 		System.out.println("  -F format          Output format for capture { " + Arrays.toString(CaptureStyle.values()) + "} Default=" + getCaptureStyle() );
 		System.out.println("  -U interval        Update interval in seconds for live view (default: " + UpdateIntervalDefault + "s)");
+		System.out.println("  -q                 Enable quiet mode. Supresses output to STDOUT except for the histogram output");
 		System.out.println("  -v | -- version    Show version information");
 		System.out.println("  -H | --histograms  All following parameters are treated as histogram file names (*)" );
 		System.out.println("  -C | --classes     All following parameters are treated as fully qualified class names (whitelist) (*)" );
@@ -310,6 +321,11 @@ public class Parameters
 	public CaptureStyle getCaptureStyle()
 	{
 		return captureStyle;
+	}
+
+	public boolean quietMode()
+	{
+		return quietMode;
 	}
 
 }
