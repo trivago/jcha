@@ -30,8 +30,8 @@ You can run jcha directly from the build directory. It requires Java 8.
 jcmd pid GC.class_histogram > classhistogram01.jch
 # Capture endlessly from a JMX enabled JVM (Java 8 server)
 jcha --jmx host:port
-# Capture 100 histograms, delay between is 10 seconds
-jcha-capture 100 10 pid filnamePrefix
+# Capture 12 histograms, delay between is 5 minutes (300 seconds)
+jcha-capture 12 300 pid filnamePrefix
 ```
 
 ### Displaying histograms on command line or GUI
