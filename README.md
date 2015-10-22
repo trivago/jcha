@@ -42,28 +42,29 @@ Shortcut, using a shell alias:
  alias jcha-gui=$path/jcha-gui
 ```
 
-## Enhancements done since initial version
- * V1.1
- ** Correlate class statistics to find common characteristics like "growing about the same amount"
- ** Auto-selector, that finds most interesting classes for jcha-gui (a graph with 100 classes does not make much sense)
- ** Selecting classes (-C option): Implement pattern-match and also allow path-based class names like java/lang/String
- * V1.2beta
- ** Live view from running JVM by reading MBean via JMX.
-     jcha --jmx host:port -U interval   
- ** Show the first derivation of the data points in the graph.
- * V1.3
- ** Capture live via JMX also in Raw format, immediately readable by jcha and jcha-gui 
- ** Quiet mode -q
- ** Initial support for a time axis in jcha-gui
- **
-  
+## Version history
+* In development
+  * Supporting a time axis in jcha-gui (done, except for autoscaling)
+* V1.3
+  * Capture live via JMX also in Raw format, immediately readable by jcha and jcha-gui 
+  * Quiet mode -q
+* V1.2
+  * Live view from running JVM by reading MBean via JMX. jcha --jmx host:port -U interval   
+  * Show the first derivation of the data points in the graph.
+* V1.1
+  * Correlate class statistics to find common characteristics like "growing about the same amount"
+  * Auto-selector, that finds most interesting classes for jcha-gui (a graph with 100 classes does not make much sense)
+  * Selecting classes (-C option): Implement pattern-match and also allow path-based class names like java/lang/String
+* V1.0
+  * Initial public release
+
 ## Possible future enhancements
- * Using the classpath of the analysed application, find the culprit class causing a leak.
- * Optionally use timestamps instead of numbers as x-Axis. Either from file inode (-t [ctime|utime|atime|time])
+ * **IN WORK** Optionally use timestamps instead of numbers as x-Axis. Either from file inode (-t [ctime|utime|atime|time])
    or filename pattern (-t name regexp)
+ * Using the classpath of the analysed application, find the culprit class causing a leak.
  * Allow to specifiy time range
  * Interpolate data over time to get a uniform graph
- * Identify service restarts, to display it on the graph and for calculations (measure from time t1 until serive restart)
+ * Identify service restarts, to display it on the graph and for calculations (measure from time t1 until service restart)
 
 ## Known bugs
  * In all versions
