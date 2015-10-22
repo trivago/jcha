@@ -22,17 +22,29 @@ Build requires Maven and Java 8. All other dependencies are pulled in by Maven.
 
 
 ## Running
-You can run jcha directly from the build directory. It requires Java 7 or above.
-jcha-gui requires JavaFX to be in the classpath. All Java 8 and some Java 7 installations fulfill this dependency.
-```
- jcmd pid GC.class_histogram > classhistogram01.jch  # Capture a single histogram, directly with jcmd from JDK
- jcha --jmx host:port                                # Capture endlessly from a JMX enabled JVM (Java 8 server)
- jcha-capture 100 10 pid filnamePrefix               # Capture 100 histograms, delay between is 10 seconds
+You can run jcha directly from the build directory. It requires Java 8.
 
- jcha classhistogram01.jch classhistogram02.jch      # Start jcha with 2 *.jch files in the directory
+### Capturing histograms
+```
+# Capture a single histogram, directly with jcmd from JDK
+jcmd pid GC.class_histogram > classhistogram01.jch
+# Capture endlessly from a JMX enabled JVM (Java 8 server)
+jcha --jmx host:port
+# Capture 100 histograms, delay between is 10 seconds
+jcha-capture 100 10 pid filnamePrefix
+```
+
+### Displaying histograms on command line or GUI
+```
+# Start jcha with 2 *.jch files in the directory
+jcha classhistogram01.jch classhistogram02.jch
+# Start GUI with all *.jch files in the directory
+jcha-gui *.jch
+```
+
+### Other options
+```
  jcha -h                                             # for showing help on all options like sorting
- 
- jcha-gui *.jch                                      # Start GUI with all *.jch files in the directory
 ```
 
 Shortcut, using a shell alias:
