@@ -51,12 +51,14 @@ public class Parameters
 	public final static double MaxGroupingPercentageDefault = 0.5;
 	private double maxGroupingPercentage = MaxGroupingPercentageDefault;
 
-	private static final int UpdateIntervalDefault = 10;
-	public static int updateIntervalSecs = UpdateIntervalDefault;
+	private static final int UpdateIntervalDefault = 300;
+	public int updateIntervalSecs = UpdateIntervalDefault;
 
 	private String jmxAddress = null;
 
 	private CaptureStyle captureStyle = CaptureStyle.Raw;
+
+	private boolean quietMode = false;
 
 	enum ParameterMode { Automatic, Histogram, ClassName }
 	
@@ -280,7 +282,7 @@ public class Parameters
 	/**
 	 * @return the updateIntervalSecs
 	 */
-	public static int getUpdateIntervalSecs()
+	public int getUpdateIntervalSecs()
 	{
 		return updateIntervalSecs;
 	}
