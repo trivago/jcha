@@ -270,7 +270,7 @@ public class ClassHistogram implements Comparable<ClassHistogram>
 		boolean timestampsOK =o.getSnapshotTimeMillisFrom() != null && getSnapshotTimeMillisFrom() != null;
 		if (timestampsOK)
 		{
-			int timestampDiff = Long.signum(o.getSnapshotTimeMillisFrom() - getSnapshotTimeMillisFrom());
+			int timestampDiff = Long.signum(getSnapshotTimeMillisFrom() - o.getSnapshotTimeMillisFrom());
 			if (timestampDiff != 0)
 				return timestampDiff;
 		}
