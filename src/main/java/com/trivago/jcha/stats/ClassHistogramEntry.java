@@ -34,7 +34,7 @@ public class ClassHistogramEntry implements Cloneable
 	{
 		this.className = className;
 		this.instances = Integer.parseInt(instances);
-		this.bytes = Integer.parseInt(bytes);
+		this.bytes = Long.parseLong(bytes);
 	}
 
 
